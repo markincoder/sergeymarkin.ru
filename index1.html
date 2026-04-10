@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сергей Маркин — Prompt Engineer | ИИ автоматизация, чат-боты, N8N</title>
+  <meta name="description" content="Промпт-инженер и специалист по AI. Чат-боты, RAG, N8N, автоматизация бизнеса. Внедряю решения за 2-3 дня. Станьте лидером рынка с искусственным интеллектом!">
+  <meta name="keywords" content="промпт-инженер, prompt engineer, ИИ автоматизация, чат-боты, RAG, N8N, AI, искусственный интеллект, вайб-кодинг, ZeroCoder">
+  <meta name="author" content="Сергей Маркин">
+  <link rel="canonical" href="https://sergeymarkin.ru/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sergeymarkin.ru/">
+  <meta property="og:title" content="Сергей Маркин — Prompt Engineer | ИИ автоматизация">
+  <meta property="og:description" content="Промпт-инженер и специалист по AI. Чат-боты, RAG, N8N, автоматизация бизнеса. Внедряю решения за 2-3 дня.">
+  <meta property="og:image" content="https://sergeymarkin.ru/img/Обложка%20профиля.jpg">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="Сергей Маркин">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="sergeymarkin.ru">
+  <meta property="twitter:url" content="https://sergeymarkin.ru/">
+  <meta name="twitter:title" content="Сергей Маркин — Prompt Engineer | ИИ автоматизация">
+  <meta name="twitter:description" content="Промпт-инженер и специалист по AI. Чат-боты, RAG, N8N, автоматизация бизнеса. Внедряю решения за 2-3 дня.">
+  <meta name="twitter:image" content="https://sergeymarkin.ru/img/Обложка%20профиля.jpg">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Сергей Маркин",
+    "jobTitle": "Prompt Engineer",
+    "description": "Промпт-инженер и специалист по AI. Чат-боты, RAG, N8N, автоматизация бизнеса.",
+    "url": "https://sergeymarkin.ru",
+    "image": "https://sergeymarkin.ru/img/Обложка%20профиля.jpg",
+    "sameAs": [
+      "https://t.me/markin_coder"
+    ],
+    "email": "markincoder@gmail.com",
+    "knowsAbout": ["AI", "Chatbots", "RAG", "N8N", "Prompt Engineering", "Automation"]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --bg-card: #111827;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      word-wrap: break-word;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-image {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      margin: 0 auto 1.5rem;
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 0.5rem;
+      line-height: 1.35;
+    }
+
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    main {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+
+    .intro {
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+      color: var(--text);
+    }
+
+    .intro strong {
+      color: var(--accent-light);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      color: var(--accent);
+      margin: 2rem 0 1rem;
+      font-weight: 600;
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      color: var(--text);
+      margin: 1.5rem 0 0.5rem;
+      font-weight: 600;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .work-steps li::before {
+      content: none;
+    }
+
+    .highlight {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+      margin: 1rem 0;
+    }
+
+    .cta {
+      text-align: center;
+      margin-top: 2.5rem;
+      padding: 2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cta p {
+      font-size: 1.15rem;
+      margin-bottom: 1rem;
+      color: var(--text-muted);
+    }
+
+    .contact-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      color: white;
+      padding: 0.875rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .contact-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .work-steps {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .work-steps li {
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1.25rem 1rem;
+      }
+      main {
+        padding: 1.5rem 1.25rem;
+      }
+      .tagline {
+        font-size: 1.1rem;
+      }
+      .intro {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem 0.75rem;
+      }
+      header {
+        margin-bottom: 1.5rem;
+      }
+      .hero-image {
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .tagline {
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+      main {
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 1.5rem 0 0.75rem;
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 1.25rem 0 0.5rem;
+      }
+      .highlight {
+        padding: 0.875rem 1rem;
+      }
+      .cta {
+        margin-top: 2rem;
+        padding: 1.5rem 0;
+      }
+      .cta p {
+        font-size: 1rem;
+      }
+      .cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+      .contact-btn {
+        display: block;
+        text-align: center;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+      }
+      footer {
+        padding: 1rem 0.5rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .container {
+        padding: 0.75rem 0.5rem;
+      }
+      h1 {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="img/Обложка профиля.jpg" alt="Сергей — Prompt Engineer" class="hero-image">
+      <h1>Привет! Я Сергей Маркин, prompt engineer.</h1>
+      <p class="tagline">Станьте лидером рынка вместе с искусственным интеллектом!</p>
+    </header>
+
+    <main>
+      <p class="intro">
+        Я — опытный <strong>промпт-инженер</strong> и специалист по вайб-кодингу. Мои компетенции позволяют мгновенно повысить эффективность вашего бизнеса благодаря автоматизации процессов с помощью передовых технологий ИИ.
+      </p>
+
+      <h2>Чем конкретно я могу помочь вашему бизнесу?</h2>
+
+      <h3>Чат-боты на основе AI</h3>
+      <p>Сокращают ваши затраты на поддержку. Создам умного помощника, способного самостоятельно отвечать на часто задаваемые вопросы клиентов, освобождая сотрудников службы поддержки от монотонной нагрузки. Если потребуется, интегрирую вашу внутреннюю базу знаний (RAG), что позволит боту давать точные ответы даже на специфические запросы.</p>
+
+      <h3>Интеграция N8N и снижение ручной работы</h3>
+      <p>Замените утомительные повторяющиеся операции на автоматизацию. Например:</p>
+      <ul>
+        <li>Автоматическое сопоставление резюме кандидатов имеющимся вакансиям</li>
+        <li>Анализ сложных юридических документов</li>
+        <li>Создание уникальных кулинарных рецептов исходя из продуктов вашей кухни</li>
+      </ul>
+
+      <h3>Уникальное предложение мультимодальных решений</h3>
+      <p>Ваш проект требует взаимодействия с разными типами медиа? Я создам решения, способные эффективно обрабатывать тексты, изображения и аудиофайлы одновременно, повышая точность и скорость обработки запросов.</p>
+
+      <h3>Оптимизированные промпты и экономичные расходы</h3>
+      <p>Будете получать качественные ответы, оптимально расходуя ресурсы и снижая затраты на обработку данных.</p>
+
+      <h3>Приложения мечты по вашим идеям</h3>
+      <p>Хотите превратить идеи в готовые автоматизированные приложения? Это моя специализация — воплощение задуманного в жизнь легко и быстро!</p>
+
+      <div class="highlight">
+        <strong>Внедряю чат-боты за 2–3 дня.</strong>
+      </div>
+
+      <p>Что бы ни стояло перед вами — я готов сделать ваш бизнес эффективнее, быстрее и прибыльнее. Давайте поговорим о вашем проекте прямо сейчас!</p>
+
+      <h2>Как происходит работа</h2>
+      <ol class="work-steps">
+        <li>Вы присылаете ТЗ или описание вашей проблемы.</li>
+        <li>Я анализирую, уточняю вопросы, даю итоговую стоимость и сроки работ.</li>
+        <li>Во время работы периодически показываю прогресс, обсуждаем, корректируем при необходимости.</li>
+        <li>После выполнения работ предоставляю доступ к разработанной системе — вы тестируете.</li>
+        <li>Если есть замечания — обсуждаем, корректируем.</li>
+        <li>После завершения передаю вам систему и исходный код. Все довольны.</li>
+      </ol>
+
+      <div class="cta" id="contact">
+        <p>Готовы обсудить ваш проект?</p>
+        <div class="cta-buttons">
+          <a href="mailto:markincoder@gmail.com" class="contact-btn">Email</a>
+          <a href="https://t.me/markin_coder" class="contact-btn">Telegram</a>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      Сергей — Prompt Engineer & AI Automation
+    </footer>
+  </div>
+</body>
+</html>
