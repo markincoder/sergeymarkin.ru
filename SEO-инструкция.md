@@ -55,6 +55,25 @@ JSON-LD с типом Person помогает поисковикам понят�
 
 ---
 
+## Сайт на Flask (этот проект)
+
+Уже учтено в шаблонах и `app.py`:
+
+- **Мета-теги** на каждой странице: `title`, `description`, `keywords`, `author`, `canonical`, `robots`.
+- **Open Graph** и **Twitter Card** с заголовком, описанием и картинкой (на странице кейса — своя картинка).
+- **JSON-LD Person** на публичных страницах; на странице кейса дополнительно **BreadcrumbList**.
+- **`robots.txt`** — разрешена индексация, закрыт `/admin`; указан путь к sitemap.
+- **`/sitemap.xml`** — главная, `/cases`, `/contact`, все страницы кейсов.
+
+Домен и картинка по умолчанию задаются в **`config.py`**:
+
+- `SITE_URL` — канонический адрес (по умолчанию `https://sergeymarkin.ru`). В продакшене задайте переменную окружения `SITE_URL`, если домен другой.
+- `SEO_OG_IMAGE` — путь к превью для соцсетей (по умолчанию `/static/images/hero-profile.svg`). Можно заменить на JPG 1200×630 в `static/images/` и прописать путь в переменной `SEO_OG_IMAGE`.
+
+Проверка превью: после деплоя вставьте полный URL сайта на [opengraph.xyz](https://www.opengraph.xyz/).
+
+---
+
 ## Проверка
 
 - **Open Graph:** [opengraph.xyz](https://www.opengraph.xyz/) — вставьте URL и посмотрите превью

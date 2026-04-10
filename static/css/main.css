@@ -1,0 +1,271 @@
+/**
+ * Единый стиль: тёмная тема как в index1.html + Bootstrap 5.
+ */
+:root {
+  --bg-dark: #0a0e1a;
+  --bg-card: #111827;
+  --accent: #3b82f6;
+  --accent-light: #7dd3fc;
+  /* Высокий контраст: основной текст почти белый, вторичный — светло-серый (читаемо на #0a0e1a) */
+  --text: #f8fafc;
+  --text-muted: #cbd5e1;
+  --text-soft: #e2e8f0;
+  /* Согласование с Bootstrap на тёмной теме */
+  --bs-body-color: #f8fafc;
+  --bs-secondary-color: #cbd5e1;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+/* Bootstrap «приглушённый» текст — делаем светлее дефолтного #6c757d */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Подзаголовки и лиды (в т.ч. слоган на главной) */
+.lead {
+  color: var(--text-soft) !important;
+  font-weight: 500;
+}
+
+/* Карточки: описание не «тонет» в фоне */
+.card-text.text-muted {
+  color: #d1d5db !important;
+}
+
+/* Навигация */
+.site-nav {
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+.site-nav .nav-link {
+  color: #e2e8f0 !important;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.site-nav .nav-link:hover,
+.site-nav .nav-link.active {
+  color: var(--accent-light) !important;
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  border: none;
+  color: #fff !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-accent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.45);
+  color: #fff !important;
+}
+
+.btn-outline-accent {
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+.btn-outline-accent:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.text-accent {
+  color: var(--accent-light) !important;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-light), #93c5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero */
+.hero-section {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.12), transparent);
+}
+
+.hero-image {
+  max-width: 480px;
+  width: 100%;
+}
+
+/* Карточки */
+.card-glass {
+  background: var(--bg-card);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.case-card {
+  position: relative;
+  background: var(--bg-card);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.case-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.45) !important;
+}
+
+.case-card-img-wrap {
+  height: 160px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.case-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cta-section {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(17, 24, 39, 0.9));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Формы */
+.form-control,
+.form-select {
+  background: #0f172a;
+  border-color: rgba(59, 130, 246, 0.25);
+  color: var(--text);
+}
+
+.form-control:focus {
+  background: #0f172a;
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
+}
+
+.form-label {
+  color: var(--text-soft);
+}
+
+.invalid-feedback {
+  color: #f87171;
+}
+
+/* Футер */
+.site-footer {
+  border-top: 1px solid rgba(59, 130, 246, 0.1);
+  color: var(--text-muted) !important;
+}
+
+.site-footer .text-muted {
+  color: var(--text-muted) !important;
+}
+
+.site-footer a {
+  color: var(--accent-light);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.site-footer a:hover {
+  opacity: 0.85;
+}
+
+/* Админка */
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+/* Анимации */
+.animate-fade-in {
+  animation: fadeIn 0.8s ease forwards;
+  opacity: 0;
+}
+
+.animate-fade-in.delay-1 {
+  animation-delay: 0.15s;
+}
+
+.animate-fade-in.delay-2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Алерты на тёмном фоне */
+.alert {
+  border-radius: 12px;
+}
+
+.alert-success {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.alert-danger {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.alert-warning {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(250, 204, 21, 0.35);
+  color: #fde047;
+}
+
+.alert-info {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #93c5fd;
+}
+
+/* Хлебные крошки */
+.breadcrumb {
+  --bs-breadcrumb-divider-color: var(--text-muted);
+}
+
+.breadcrumb-item a {
+  color: var(--accent-light);
+  text-decoration: none;
+}
+
+.breadcrumb-item.active {
+  color: var(--text-muted);
+  opacity: 0.95;
+}
+
+/* Строка «новая заявка» в админке */
+tr.row-unread td {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Кейс детально */
+.case-detail-body {
+  line-height: 1.7;
+}
+
+.case-detail-body p {
+  margin-bottom: 1rem;
+  color: #d1d5db;
+}

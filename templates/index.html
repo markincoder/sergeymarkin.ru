@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-section text-center py-5 mb-2">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <img src="{{ url_for('static', filename='images/hero-profile.jpg') }}" alt="Сергей Маркин" class="hero-image img-fluid rounded-4 shadow-lg mb-4 animate-fade-in" width="480" height="auto" loading="eager">
+        <h1 class="display-6 fw-bold text-gradient mb-3 animate-fade-in delay-1">Привет! Я Сергей Маркин, prompt engineer.</h1>
+        <p class="lead text-muted mb-4 animate-fade-in delay-2">Трансформирую хаос в алгоритмы. Сокращаю затраты времени на типовые операции до 50% с помощью ИИ.</p>
+        <a href="#cases-preview" class="btn btn-outline-light btn-lg me-2 mb-2">Смотреть примеры работ</a>
+        <a href="{{ url_for('contact') }}" class="btn btn-accent btn-lg mb-2">Написать мне</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-4">
+  <div class="container">
+    <div class="card-glass p-4 p-md-5 rounded-4">
+
+      <h2 class="h4 text-accent mb-4">Специализация</h2>
+      <p class="mb-3">Я — промпт-инженер и эксперт по <strong>вайб-кодингу</strong>. Мой подход заключается в сверхбыстрой сборке рабочих бизнес-решений с использованием LLM и инструментов low-code автоматизации.</p>
+      <ul class="list-unstyled mb-4">
+        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Prompt Engineering:</strong> проектирование сложных промптов для идеального результата от нейросетей.</li>
+        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Vibe Coding:</strong> стремительная разработка и итерация продуктов, ориентированная на результат, а не на процесс.</li>
+        <li class="mb-0"><span class="text-accent me-2">▸</span> <strong>AI-Интеграция:</strong> внедрение искусственного интеллекта в существующую IT-инфраструктуру компании.</li>
+      </ul>
+
+      <h2 class="h4 text-accent mb-4">Ценность для бизнеса</h2>
+      <p class="mb-3">Я не просто «внедряю нейросети», а решаю конкретные финансовые и операционные задачи:</p>
+      <ul class="list-unstyled mb-0">
+        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Освобождение ресурса:</strong> передаю до 50% рутины (почта, отчёты, CRM) ИИ-агентам.</li>
+        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Масштабируемость:</strong> создаю системы, которые обрабатывают в 10 раз больше заявок без найма новых сотрудников.</li>
+        <li class="mb-0"><span class="text-accent me-2">▸</span> <strong>Чистая выгода:</strong> снижаю операционные издержки и риск «человеческого фактора» в критических узлах бизнеса.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="cases-preview" class="py-5">
+  <div class="container">
+    <h2 class="h3 text-center mb-2">Примеры работ</h2>
+    <p class="text-muted text-center mb-5">Реальные решения: HR, RAG-бот в Telegram, автоматизация задач после созвонов</p>
+    <div class="row g-4">
+      {% for c in cases %}
+      <div class="col-md-6 col-xl-4">
+        <article class="card case-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="case-card-img-wrap">
+            <img src="{{ url_for('static', filename='images/' + c.image) }}" class="card-img-top" alt="{{ c.title }}">
+          </div>
+          <div class="card-body d-flex flex-column">
+            <h3 class="h5 card-title">{{ c.title }}</h3>
+            <p class="card-text text-muted small flex-grow-1">{{ c.short }}</p>
+            <a href="{{ url_for('case_detail', slug=c.slug) }}" class="btn btn-outline-accent btn-sm mt-2 stretched-link">Подробнее</a>
+          </div>
+        </article>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{{ url_for('cases_list') }}" class="btn btn-outline-light">Все примеры работ</a>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 cta-section rounded-4 mx-3 mx-md-auto mb-4" style="max-width: 900px;">
+  <div class="container text-center py-4">
+    <h2 class="h4 mb-3">Давайте проверим ваш бизнес на прочность</h2>
+    <p class="text-muted mb-4">Запишитесь на короткий аудит: я проанализирую ваши процессы и предложу <strong>3 точки для автоматизации</strong>, которые дадут результат уже через неделю.</p>
+    <a href="{{ url_for('contact') }}" class="btn btn-accent btn-lg px-5 me-2 mb-2">Перейти к форме обратной связи</a>
+    <a href="https://t.me/markin_coder" class="btn btn-outline-light btn-lg mb-2" target="_blank" rel="noopener">Записаться на консультацию в Telegram</a>
+  </div>
+</section>
+{% endblock %}

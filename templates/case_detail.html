@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{{ breadcrumb_ld | tojson }}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('cases_list') }}">Примеры работ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ case.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4 align-items-start">
+    <div class="col-lg-5">
+      <img src="{{ url_for('static', filename='images/' + case.image) }}" alt="{{ case.title }}" class="img-fluid rounded-4 shadow w-100">
+    </div>
+    <div class="col-lg-7">
+      <h1 class="h2 text-gradient mb-3">{{ case.title }}</h1>
+      <p class="lead text-muted">{{ case.short }}</p>
+      <div class="card card-glass p-3 mb-4 rounded-3">
+        <p class="mb-1 small"><strong class="text-accent">Стек:</strong> {{ case.stack }}</p>
+        <p class="mb-0 small"><strong class="text-accent">Результат:</strong> {{ case.result }}</p>
+      </div>
+      <div class="case-detail-body">
+        {{ case.detail | safe }}
+      </div>
+      <div class="mt-4 d-flex flex-wrap gap-2">
+        <a href="{{ url_for('contact') }}" class="btn btn-accent">Обсудить похожий проект</a>
+        <a href="{{ url_for('cases_list') }}" class="btn btn-outline-light">Все примеры</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

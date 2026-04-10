@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 560px;">
+  <h1 class="h2 text-gradient text-center mb-2">Форма обратной связи</h1>
+  <p class="text-muted text-center mb-4">Заполните поля — я свяжусь с вами по email или Telegram.</p>
+
+  <div class="card card-glass p-4 p-md-5 rounded-4">
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="Иван Иванов") }}
+        {% for err in form.name.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", type="email") }}
+        {% for err in form.email.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.phone.label(class="form-label") }}
+        {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="+7 951 123 45 67") }}
+        {% for err in form.phone.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        {{ form.subject.label(class="form-label") }}
+        {{ form.subject(class="form-control" + (" is-invalid" if form.subject.errors else ""), placeholder="Тема обращения") }}
+        {% for err in form.subject.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-4">
+        {{ form.body.label(class="form-label") }}
+        {{ form.body(class="form-control", rows="4", placeholder="Кратко опишите задачу (необязательно)") }}
+      </div>
+
+      {{ form.submit(class="btn btn-accent w-100 py-2") }}
+    </form>
+  </div>
+</div>
+{% endblock %}
