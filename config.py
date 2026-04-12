@@ -26,8 +26,8 @@ class Config:
         "sqlite:///" + str(BASE_DIR / "database" / "app.db")
     )
 
-    ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME") or "admin"
-    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or "admin123"
+    ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
     LOG_LEVEL = os.environ.get("LOG_LEVEL") or "INFO"
 
