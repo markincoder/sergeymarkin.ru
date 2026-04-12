@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Модели SQLAlchemy."""
+"""Модели SQLAlchemy 2."""
 from datetime import datetime
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 
-from extensions import db
+from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
-class User(UserMixin, db.Model):
-    """Администратор сайта."""
+class Base(DeclarativeBase):
+    pass
 
+
+class User(Base):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(256), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
@@ -23,19 +25,17 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-class ContactMessage(db.Model):
-    """Заявка с формы обратной связи."""
-
+class ContactMessage(Base):
     __tablename__ = "contact_messages"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), nullable=False, index=True)
-    phone = db.Column(db.String(40), nullable=False)
-    subject = db.Column(db.String(200), nullable=False)
-    body = db.Column(db.Text, nullable=True)  # дополнительный текст сообщения
-    is_read = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    email: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    phone: Mapped[str] = mapped_column(String(40), nullable=False)
+    subject: Mapped[str] = mapped_column(String(200), nullable=False)
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ContactMessage {self.id} {self.email}>"

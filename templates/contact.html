@@ -7,38 +7,38 @@
 
   <div class="card card-glass p-4 p-md-5 rounded-4">
     <form method="post" novalidate>
-      {{ form.hidden_tag() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
       <div class="mb-3">
-        {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="Иван Иванов") }}
-        {% for err in form.name.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        <label class="form-label" for="id_name">Имя</label>
+        <input type="text" name="name" id="id_name" class="form-control{% if field_errors.get('name') %} is-invalid{% endif %}" placeholder="Иван Иванов" value="{{ form_values.get('name', '') }}" required minlength="2" maxlength="120">
+        {% for err in field_errors.get('name', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
       <div class="mb-3">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", type="email") }}
-        {% for err in form.email.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        <label class="form-label" for="id_email">Email</label>
+        <input type="email" name="email" id="id_email" class="form-control{% if field_errors.get('email') %} is-invalid{% endif %}" placeholder="you@example.com" value="{{ form_values.get('email', '') }}" required maxlength="120">
+        {% for err in field_errors.get('email', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
       <div class="mb-3">
-        {{ form.phone.label(class="form-label") }}
-        {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="+7 951 123 45 67") }}
-        {% for err in form.phone.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        <label class="form-label" for="id_phone">Телефон</label>
+        <input type="text" name="phone" id="id_phone" class="form-control{% if field_errors.get('phone') %} is-invalid{% endif %}" placeholder="+7 951 123 45 67" value="{{ form_values.get('phone', '') }}" required minlength="5" maxlength="40">
+        {% for err in field_errors.get('phone', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
       <div class="mb-3">
-        {{ form.subject.label(class="form-label") }}
-        {{ form.subject(class="form-control" + (" is-invalid" if form.subject.errors else ""), placeholder="Тема обращения") }}
-        {% for err in form.subject.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        <label class="form-label" for="id_subject">Тема сообщения</label>
+        <input type="text" name="subject" id="id_subject" class="form-control{% if field_errors.get('subject') %} is-invalid{% endif %}" placeholder="Тема обращения" value="{{ form_values.get('subject', '') }}" required minlength="3" maxlength="200">
+        {% for err in field_errors.get('subject', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
       <div class="mb-4">
-        {{ form.body.label(class="form-label") }}
-        {{ form.body(class="form-control", rows="4", placeholder="Кратко опишите задачу (необязательно)") }}
+        <label class="form-label" for="id_body">Сообщение (необязательно)</label>
+        <textarea name="body" id="id_body" class="form-control" rows="4" placeholder="Кратко опишите задачу (необязательно)" maxlength="5000">{{ form_values.get('body', '') }}</textarea>
       </div>
 
-      {{ form.submit(class="btn btn-accent w-100 py-2") }}
+      <button type="submit" class="btn btn-accent w-100 py-2">Отправить</button>
     </form>
   </div>
 </div>

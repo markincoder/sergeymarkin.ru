@@ -1,1 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360"><defs><linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a0e1a"/><stop offset="1" stop-color="#422006"/></linearGradient></defs><rect width="600" height="360" fill="url(#c)"/><rect x="140" y="80" width="100" height="60" rx="4" fill="#1e293b" stroke="#f97316"/><rect x="250" y="140" width="100" height="60" rx="4" fill="#1e293b" stroke="#f97316"/><rect x="360" y="200" width="100" height="60" rx="4" fill="#1e293b" stroke="#f97316"/><path stroke="#f97316" stroke-width="2" fill="none" d="M190 140 L300 170 M350 200 L410 230"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360">
+  <defs>
+    <linearGradient id="hrBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#431407"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="360" fill="url(#hrBg)"/>
+  <g stroke="#fb923c" stroke-width="1.2" fill="#1e293b">
+    <rect x="72" y="168" width="120" height="92" rx="6"/>
+    <rect x="78" y="120" width="120" height="92" rx="6" opacity="0.85"/>
+    <rect x="84" y="72" width="120" height="92" rx="6" opacity="0.7"/>
+  </g>
+  <path stroke="#fdba74" stroke-width="2" fill="none" d="M100 108h88M100 122h72M100 136h80"/>
+  <path stroke="#fdba74" stroke-width="1.5" fill="none" opacity="0.7" d="M106 156h88M106 168h64"/>
+  <circle cx="268" cy="180" r="14" fill="#431407" stroke="#f97316" stroke-width="2"/>
+  <circle cx="332" cy="140" r="14" fill="#431407" stroke="#f97316" stroke-width="2"/>
+  <circle cx="332" cy="220" r="14" fill="#431407" stroke="#f97316" stroke-width="2"/>
+  <circle cx="396" cy="180" r="14" fill="#431407" stroke="#f97316" stroke-width="2"/>
+  <path stroke="#f97316" stroke-width="1.5" fill="none" d="M282 180 L318 148 M318 212 L282 180 M346 154 L382 170 M346 206 L382 190"/>
+  <path fill="#fbbf24" d="M468 72 L476 104 L510 104 L482 124 L492 156 L468 138 L444 156 L454 124 L426 104 L460 104 Z"/>
+  <text x="438" y="212" fill="#fed7aa" font-family="system-ui,sans-serif" font-size="15" font-weight="600">GPT-4</text>
+  <rect x="412" y="232" width="176" height="64" rx="10" fill="#1e293b" stroke="#ea580c" stroke-width="1.5"/>
+  <path stroke="#fdba74" stroke-width="2" stroke-linecap="round" d="M432 262h136M432 276h108"/>
+  <path fill="#f97316" d="M400 172 L412 180 L400 188 Z"/>
+</svg>

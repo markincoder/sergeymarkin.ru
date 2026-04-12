@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360">
+  <defs>
+    <linearGradient id="faqBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#134e4a"/>
+    </linearGradient>
+    <linearGradient id="faqBubble" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="360" fill="url(#faqBg)"/>
+  <rect x="70" y="52" width="460" height="256" rx="16" fill="#0f172a" stroke="#2dd4bf" stroke-width="1.5"/>
+  <rect x="70" y="52" width="460" height="38" rx="16" fill="#1e293b"/>
+  <rect x="70" y="78" width="460" height="12" fill="#1e293b"/>
+  <circle cx="92" cy="71" r="5" fill="#f87171"/>
+  <circle cx="112" cy="71" r="5" fill="#fbbf24"/>
+  <circle cx="132" cy="71" r="5" fill="#4ade80"/>
+  <rect x="96" y="112" width="210" height="11" rx="4" fill="#334155"/>
+  <rect x="96" y="132" width="170" height="11" rx="4" fill="#475569" opacity="0.85"/>
+  <rect x="96" y="152" width="190" height="11" rx="4" fill="#475569" opacity="0.65"/>
+  <rect x="96" y="192" width="48" height="60" rx="5" fill="#134e4a" stroke="#5eead4" stroke-width="1.2" opacity="0.9"/>
+  <path stroke="#99f6e4" stroke-width="1.5" fill="none" d="M104 206h32M104 216h24M104 226h28"/>
+  <rect x="156" y="198" width="48" height="60" rx="5" fill="#0f766e" stroke="#5eead4" stroke-width="1" opacity="0.75"/>
+  <path stroke="#99f6e4" stroke-width="1.2" fill="none" opacity="0.8" d="M164 212h32M164 222h20"/>
+  <path d="M210 222 C260 200 300 195 332 208" fill="none" stroke="#5eead4" stroke-width="1.5" stroke-dasharray="7 6" opacity="0.75"/>
+  <path d="M204 238 C248 228 292 220 328 232" fill="none" stroke="#5eead4" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.5"/>
+  <rect x="332" y="168" width="178" height="100" rx="14" fill="url(#faqBubble)"/>
+  <path d="M413 268 L401 292 L425 268 Z" fill="#14b8a6"/>
+  <text x="348" y="218" fill="#042f2e" font-family="system-ui,sans-serif" font-size="26" font-weight="700">FAQ</text>
+  <text x="348" y="248" fill="#134e4a" font-family="system-ui,sans-serif" font-size="13">RAG + OpenAI</text>
+  <circle cx="472" cy="128" r="20" fill="#fbbf24" opacity="0.2"/>
+  <path d="M472 116v24M460 128h24" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

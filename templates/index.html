@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+{# Контент главной; оболочка — base.html #}
 <section class="hero-section text-center py-5 mb-2">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10">
-        <img src="{{ url_for('static', filename='images/hero-profile.jpg') }}" alt="Сергей Маркин" class="hero-image img-fluid rounded-4 shadow-lg mb-4 animate-fade-in" width="480" height="auto" loading="eager">
+        <img src="/static/images/hero-profile.jpg" alt="Сергей Маркин" class="hero-image img-fluid rounded-4 shadow-lg mb-4 animate-fade-in" width="480" height="auto" loading="eager">
         <h1 class="display-6 fw-bold text-gradient mb-3 animate-fade-in delay-1">Привет! Я Сергей Маркин, prompt engineer.</h1>
         <p class="lead text-muted mb-4 animate-fade-in delay-2">Трансформирую хаос в алгоритмы. Сокращаю затраты времени на типовые операции до 50% с помощью ИИ.</p>
         <a href="#cases-preview" class="btn btn-outline-light btn-lg me-2 mb-2">Смотреть примеры работ</a>
@@ -18,7 +19,6 @@
 <section class="py-4">
   <div class="container">
     <div class="card-glass p-4 p-md-5 rounded-4">
-
       <h2 class="h4 text-accent mb-4">Специализация</h2>
       <p class="mb-3">Я — промпт-инженер и эксперт по <strong>вайб-кодингу</strong>. Мой подход заключается в сверхбыстрой сборке рабочих бизнес-решений с использованием LLM и инструментов low-code автоматизации.</p>
       <ul class="list-unstyled mb-4">
@@ -26,7 +26,6 @@
         <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Vibe Coding:</strong> стремительная разработка и итерация продуктов, ориентированная на результат, а не на процесс.</li>
         <li class="mb-0"><span class="text-accent me-2">▸</span> <strong>AI-Интеграция:</strong> внедрение искусственного интеллекта в существующую IT-инфраструктуру компании.</li>
       </ul>
-
       <h2 class="h4 text-accent mb-4">Ценность для бизнеса</h2>
       <p class="mb-3">Я не просто «внедряю нейросети», а решаю конкретные финансовые и операционные задачи:</p>
       <ul class="list-unstyled mb-0">
@@ -41,13 +40,13 @@
 <section id="cases-preview" class="py-5">
   <div class="container">
     <h2 class="h3 text-center mb-2">Примеры работ</h2>
-    <p class="text-muted text-center mb-5">Реальные решения: HR, RAG-бот в Telegram, автоматизация задач после созвонов</p>
+    <p class="text-muted text-center mb-5">Реальные решения: HR, RAG-бот в Telegram, FAQ на сайте, автоматизация задач после созвонов</p>
     <div class="row g-4">
       {% for c in cases %}
       <div class="col-md-6 col-xl-4">
         <article class="card case-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
           <div class="case-card-img-wrap">
-            <img src="{{ url_for('static', filename='images/' + c.image) }}" class="card-img-top" alt="{{ c.title }}">
+            <img src="/static/images/{{ c.image }}" class="card-img-top" alt="{{ c.title }}">
           </div>
           <div class="card-body d-flex flex-column">
             <h3 class="h5 card-title">{{ c.title }}</h3>

@@ -17,7 +17,7 @@
 
   <div class="row g-4 align-items-start">
     <div class="col-lg-5">
-      <img src="{{ url_for('static', filename='images/' + case.image) }}" alt="{{ case.title }}" class="img-fluid rounded-4 shadow w-100">
+      <img src="/static/images/{{ case.image }}" alt="{{ case.title }}" class="img-fluid rounded-4 shadow w-100">
     </div>
     <div class="col-lg-7">
       <h1 class="h2 text-gradient mb-3">{{ case.title }}</h1>

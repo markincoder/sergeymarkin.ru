@@ -5,21 +5,23 @@
   <h1 class="h3 text-center text-gradient mb-4">Админ-панель</h1>
   <div class="card card-glass p-4 rounded-4">
     <form method="post" novalidate>
-      {{ form.hidden_tag() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% for err in field_errors.get('login', []) %}
+      <div class="alert alert-danger py-2">{{ err }}</div>
+      {% endfor %}
       <div class="mb-3">
-        {{ form.username.label(class="form-label") }}
-        {{ form.username(class="form-control") }}
-        {% for err in form.username.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        <label class="form-label" for="id_username">Логин</label>
+        <input type="text" name="username" id="id_username" class="form-control" required autocomplete="username">
       </div>
       <div class="mb-3">
-        {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
+        <label class="form-label" for="id_password">Пароль</label>
+        <input type="password" name="password" id="id_password" class="form-control" required autocomplete="current-password">
       </div>
       <div class="mb-3 form-check">
-        {{ form.remember(class="form-check-input") }}
-        {{ form.remember.label(class="form-check-label") }}
+        <input type="checkbox" name="remember" id="id_remember" class="form-check-input" value="on">
+        <label class="form-check-label" for="id_remember">Запомнить меня</label>
       </div>
-      {{ form.submit(class="btn btn-accent w-100") }}
+      <button type="submit" class="btn btn-accent w-100">Войти</button>
     </form>
   </div>
   <p class="text-center mt-3"><a href="{{ url_for('index') }}" class="text-muted">На главную</a></p>

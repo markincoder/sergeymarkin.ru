@@ -1,4 +1,4 @@
-# Сборка: из корня проекта (где лежит app.py)
+# Сборка из корня проекта (main.py, app.py)
 FROM python:3.11.14-slim-bookworm
 
 WORKDIR /app
@@ -11,9 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p /app/database
+RUN mkdir -p /app/database /app/backend/rag_data
 
 EXPOSE 8000
 
-# Таймаут запроса выше 30s на случай медленного SMTP (уведомления также уходят в фоне)
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "--timeout", "120", "--graceful-timeout", "30", "app:app"]
+CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--timeout", "120", "--graceful-timeout", "30", "main:app"]

@@ -1,0 +1,223 @@
+/* FAQ-виджет (по макету frontend/index.html из faq_bot) */
+
+.chat-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.7);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  z-index: 1040;
+}
+
+.chat-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 50px rgba(15, 23, 42, 0.9);
+}
+
+.chat-launcher span {
+  font-size: 30px;
+}
+
+.chat-widget {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: 480px;
+  max-height: calc(100vh - 120px);
+  background: #020617;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(20px);
+  z-index: 1040;
+}
+
+.chat-header {
+  padding: 14px 16px;
+  background: radial-gradient(circle at top left, #4f46e5, #020617);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #e5e7eb;
+  flex-shrink: 0;
+}
+
+.chat-header-left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.chat-widget .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #020617;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.6);
+}
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chat-subtitle {
+  font-size: 11px;
+  color: #cbd5f5;
+  opacity: 0.8;
+}
+
+.chat-close {
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.8;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.chat-close:hover {
+  opacity: 1;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.05), transparent),
+    radial-gradient(circle at bottom, rgba(129, 140, 248, 0.08), #020617);
+}
+
+.chat-message {
+  max-width: 80%;
+  border-radius: 14px;
+  padding: 8px 11px;
+  font-size: 13px;
+  line-height: 1.35;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-message.user {
+  margin-left: auto;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: #e5e7eb;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message.bot {
+  margin-right: auto;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e5e7eb;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-footer {
+  padding: 10px 10px 12px;
+  border-top: 1px solid rgba(30, 64, 175, 0.6);
+  background: linear-gradient(to top, #020617, #020617f5);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  padding: 7px 12px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-size: 13px;
+  outline: none;
+}
+
+.chat-input::placeholder {
+  color: #6b7280;
+}
+
+.chat-send {
+  border-radius: 999px;
+  border: none;
+  padding: 7px 12px;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: #e5e7eb;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.8);
+}
+
+.chat-send:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+.chat-send span {
+  font-size: 14px;
+}
+
+.typing-indicator {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.chat-message .typing-indicator .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #9ca3af;
+  animation: faq-chat-blink 1s infinite ease-in-out;
+}
+
+.chat-message .typing-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chat-message .typing-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes faq-chat-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}

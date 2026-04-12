@@ -51,17 +51,17 @@
           <td class="text-end text-nowrap">
             {% if m.is_read %}
             <form method="post" action="{{ url_for('admin_message_unread', message_id=m.id) }}" class="d-inline">
-              {{ action_form.hidden_tag() }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="btn btn-outline-secondary btn-sm mb-1">Не прочитано</button>
             </form>
             {% else %}
             <form method="post" action="{{ url_for('admin_message_read', message_id=m.id) }}" class="d-inline">
-              {{ action_form.hidden_tag() }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="btn btn-outline-success btn-sm mb-1">Прочитано</button>
             </form>
             {% endif %}
             <form method="post" action="{{ url_for('admin_message_delete', message_id=m.id) }}" class="d-inline" onsubmit="return confirm('Удалить заявку #{{ m.id }}?');">
-              {{ action_form.hidden_tag() }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="btn btn-outline-danger btn-sm mb-1">Удалить</button>
             </form>
           </td>
