@@ -59,7 +59,7 @@ set SECRET_KEY=случайная_длинная_строка
 │   ├── rag_chat.py         # APIRouter: POST /api/chat, GET /api/health, init_rag()
 │   ├── build_index.py      # Построение FAISS из FAQ
 │   ├── rag_index.py        # Загрузка индекса и поиск
-│   └── rag_data/           # faqs.json, *.txt, faiss_index.bin, faqs_metadata.npy
+│   └── rag_data/           # faq-items.json, *.txt, faiss_index.bin, faqs_metadata.npy
 ├── database/
 │   └── app.db              # SQLite (создаётся при работе; в Docker — том)
 ├── templates/              # Jinja2
@@ -84,7 +84,7 @@ OPENAI_API_KEY=ваш_ключ_openai
 
 ### 1. Данные и построение индекса (FAISS)
 
-- Редактируйте **`backend/rag_data/faqs.json`** — список объектов `{ "question": "...", "answer": "..." }`.
+- Редактируйте **`backend/rag_data/faq-items.json`** — список объектов `{ "question": "...", "answer": "..." }`.
 - Дополнительно можно положить **`.txt`** в `backend/rag_data/` (первая непустая строка — заголовок, остальное — текст; см. `backend/build_index.py`).
 
 Сборка индекса из корня проекта:
@@ -106,7 +106,9 @@ python -m backend.build_index
 
 | Метод | Путь | Назначение |
 |--------|------|------------|
-| `POST` | `/api/chat` | Тело JSON: `{ "message": "текст вопроса" }`. Ответ: `{ "answer": "..." }`. |
+| `POST` | `/api/chat` | JSON: `{ "message": "…", "session_id": "…" }` (session опционально). Ответ: `answer`, `session_id`, `operator_active`. |
+| `GET` | `/api/chat/operator-poll` | Query: `session_id`, `after_op_seq` — новые реплики оператора для виджета. |
+| `POST` | `/api/telegram/webhook` | Вызывается только Telegram; заголовок `X-Telegram-Bot-Api-Secret-Token`. |
 | `GET` | `/api/health` | Статус: ключ API и наличие индекса. |
 
 Виджет на главной (`static/js/faq-chat.js`) ходит на **`/api/chat`** того же origin.
@@ -136,7 +138,54 @@ python -m backend.build_index
 | `MAIL_PASSWORD` | Пароль приложения (Яндекс / Google и т.д.) |
 | `MAIL_TO` | Куда слать письма |
 | `TELEGRAM_BOT_TOKEN` | Токен от [@BotFather](https://t.me/BotFather) |
-| `TELEGRAM_CHAT_ID` | Числовой id чата |
+| `TELEGRAM_CHAT_ID` | Числовой id чата (личка или группа `-100…`) |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет webhook (раздел ниже) |
+| `TELEGRAM_MESSAGE_THREAD_ID` | Необязательно: id темы в супергруппе с темами (forum) |
+
+### Telegram: ответы оператора на сайт (webhook)
+
+Уведомления о заявках и эскалация чата в Telegram используют `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`. Чтобы текст оператора из Telegram попадал в виджет на сайте, Telegram должен вызывать ваш сервер по **публичному HTTPS** — это настраивается через **setWebhook** в Bot API.
+
+**1. В `.env`:**
+
+```env
+TELEGRAM_BOT_TOKEN=123456789:AA…ваш_токен…
+TELEGRAM_CHAT_ID=-1001234567890
+TELEGRAM_WEBHOOK_SECRET=длинная_случайная_строка
+```
+
+Придумайте **`TELEGRAM_WEBHOOK_SECRET`** и передайте **то же значение** в `setWebhook` как `secret_token` (шаг 3). После правок `.env` перезапустите приложение.
+
+**2. URL эндпоинта**
+
+Полный путь: **`https://<хост>/api/telegram/webhook`** (тот же домен, что у сайта с чатом).
+
+- Продакшен: например `https://sergeymarkin.ru/api/telegram/webhook`.
+- Только локальный ПК: нужен туннель (**ngrok**, **Cloudflare Tunnel**): `https://xxxx.ngrok-free.app/api/telegram/webhook`.
+
+**3. Регистрация webhook**
+
+Пример для **PowerShell** (`^` — перенос строки; в bash уберите `^` и вставьте одну строку):
+
+```bash
+curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" ^
+  -d "url=https://<ВАШ_ХОСТ>/api/telegram/webhook" ^
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET_как_в_.env>"
+```
+
+**4. Проверка**
+
+```bash
+curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
+```
+
+Смотрите `url` и при ошибках — `last_error_message`.
+
+**5. Оператор в Telegram**
+
+Удобнее отвечать **Reply** на сообщение бота; запасной вариант — строка `session: <uuid>` из уведомления в тексте ответа. Детали переменных — **`.env.example`**.
+
+Без корректного `setWebhook` или при несовпадении секрета с приложением ответы оператора в виджет **не попадут**.
 
 ## Логирование
 

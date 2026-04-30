@@ -23,14 +23,18 @@ def search_similar(
     metadata: np.ndarray,
     query_vec: np.ndarray,
     k: int = 3,
-) -> List[Any]:
+) -> tuple[List[Any], List[float]]:
+    """Возвращает (метаданные попаданий, L2-расстояния). Меньше distance — ближе к запросу."""
     distances, indices = index.search(query_vec, k)
     idxs = indices[0]
-    results = []
-    for i in idxs:
+    dist_row = distances[0]
+    results: List[Any] = []
+    dists: List[float] = []
+    for j, i in enumerate(idxs):
         if 0 <= i < len(metadata):
             results.append(metadata[i])
-    return results
+            dists.append(float(dist_row[j]))
+    return results, dists
 
 
 def load_faq_data(path: str):

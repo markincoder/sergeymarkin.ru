@@ -13,6 +13,31 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+def _telegram_chat_id_for_api(chat_id: str) -> int | str:
+    s = (chat_id or "").strip()
+    if not s or s.startswith("@"):
+        return s
+    try:
+        return int(s)
+    except ValueError:
+        return s
+
+
+def _telegram_send_payload_base(cfg: Mapping[str, Any], text: str) -> dict[str, Any]:
+    chat_id_raw = (cfg.get("TELEGRAM_CHAT_ID") or "").strip()
+    payload: dict[str, Any] = {
+        "chat_id": _telegram_chat_id_for_api(chat_id_raw),
+        "text": text[:4096],
+    }
+    mt = (cfg.get("TELEGRAM_MESSAGE_THREAD_ID") or "").strip()
+    if mt:
+        try:
+            payload["message_thread_id"] = int(mt)
+        except ValueError:
+            logger.warning("TELEGRAM_MESSAGE_THREAD_ID is not an integer: %s", mt)
+    return payload
+
+
 def _smtp_send(
     cfg: Mapping[str, Any],
     *,
@@ -105,8 +130,50 @@ def send_telegram_notification(
         logger.warning("Telegram not configured")
         return
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    r = requests.post(url, json={"chat_id": chat_id, "text": text[:4096]}, timeout=15)
+    payload = _telegram_send_payload_base(cfg, text)
+    r = requests.post(url, json=payload, timeout=15)
     r.raise_for_status()
+
+
+def send_telegram_bot_message(
+    cfg: Mapping[str, Any],
+    *,
+    text: str,
+    reply_to_message_id: int | None = None,
+) -> int:
+    """Отправка от имени бота; возвращает message_id (для reply и карты сессий)."""
+    token = (cfg.get("TELEGRAM_BOT_TOKEN") or "").strip()
+    chat_id = (cfg.get("TELEGRAM_CHAT_ID") or "").strip()
+    if not token or not chat_id:
+        raise RuntimeError("Telegram not configured")
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    base = _telegram_send_payload_base(cfg, text)
+    payload = dict(base)
+    if reply_to_message_id is not None:
+        payload["reply_to_message_id"] = int(reply_to_message_id)
+    r = requests.post(url, json=payload, timeout=15)
+    if r.status_code == 400 and reply_to_message_id is not None:
+        try:
+            desc = (r.json() or {}).get("description", r.text)
+        except Exception:
+            desc = r.text
+        logger.warning(
+            "Telegram sendMessage with reply_to_message_id=%s: %s — retrying without reply_to",
+            reply_to_message_id,
+            desc,
+        )
+        r = requests.post(url, json=base, timeout=15)
+    if not r.ok:
+        try:
+            desc = (r.json() or {}).get("description", r.text)
+        except Exception:
+            desc = r.text
+        logger.error("Telegram sendMessage failed: %s", desc)
+    r.raise_for_status()
+    data = r.json()
+    if not data.get("ok"):
+        raise RuntimeError(str(data.get("description", data)))
+    return int(data["result"]["message_id"])
 
 
 def notify_contact_submission(

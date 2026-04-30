@@ -164,7 +164,7 @@ docker compose up -d
 
 ## Шаг 6. RAG-индекс (перед сборкой образа или после смены FAQ)
 
-Индекс FAISS входит **в образ**. После правок **`backend/rag_data/`** (`faqs.json`, `*.txt`) выполните **в клоне репозитория** (нужен `OPENAI_API_KEY` в окружении или `.env`):
+Индекс FAISS входит **в образ**. После правок **`backend/rag_data/`** (`faq-items.json`, `*.txt`) выполните **в клоне репозитория** (нужен `OPENAI_API_KEY` в окружении или `.env`):
 
 ```bash
 python -m backend.build_index

@@ -106,6 +106,17 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="sergeymarkin.ru", lifespan=lifespan)
+_cors_origins = [o.strip() for o in (Config.CORS_ALLOW_ORIGINS or "").split(",") if o.strip()]
+if _cors_origins:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    )
 app.add_middleware(SessionMiddleware, secret_key=Config.SECRET_KEY, max_age=14 * 24 * 3600)
 # Внешний слой: за Traefik client=172.x, иначе scheme=http и url_for ломает ссылки/CSS.
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")

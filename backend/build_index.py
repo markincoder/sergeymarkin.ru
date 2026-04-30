@@ -23,7 +23,8 @@ def _client() -> OpenAI:
 
 RAG_DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR = str(RAG_DATA_DIR)
-DATA_PATH = os.path.join(DATA_DIR, "faqs.json")
+FAQ_JSON = "faq-items.json"
+DATA_PATH = os.path.join(DATA_DIR, FAQ_JSON)
 INDEX_PATH = os.path.join(DATA_DIR, "faiss_index.bin")
 META_PATH = os.path.join(DATA_DIR, "faqs_metadata.npy")
 
@@ -78,15 +79,13 @@ def load_txt_documents(directory: str):
 
 
 def main():
-    ensure_rag_seed_data()
-
     items = []
 
     # 1) FAQ из JSON (если файл есть)
     if os.path.exists(DATA_PATH):
         faqs = load_faq_data(DATA_PATH)
         items.extend(faqs)
-        print(f"Loaded {len(faqs)} FAQ items from faqs.json")
+        print(f"Loaded {len(faqs)} FAQ items from {FAQ_JSON}")
 
     # 2) Документы из .txt-файлов
     txt_docs = load_txt_documents(DATA_DIR)
@@ -95,7 +94,7 @@ def main():
 
     if not items:
         raise RuntimeError(
-            "Нет данных для индекса: положите faqs.json и/или *.txt в backend/rag_data/, "
+            f"Нет данных для индекса: положите {FAQ_JSON} и/или *.txt в backend/rag_data/, "
             "затем снова запустите этот скрипт и пересоберите Docker-образ."
         )
 
@@ -117,7 +116,7 @@ def main():
             {
                 "question": item["question"],
                 "answer": item["answer"],
-                "source": item.get("source", "faqs.json"),
+                "source": item.get("source", FAQ_JSON),
             }
             for item in items
         ],
