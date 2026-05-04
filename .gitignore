@@ -7,7 +7,7 @@ venv/
 .venv/
 env/
 
-# RAG: backend/rag_data/ (см. config.RAG_DATA_DIR)
+# RAG: database/rag_data/ (см. config.RAG_DATA_DIR)
 backend/data/
 
 # SQLite

@@ -9,7 +9,7 @@ import numpy as np
 def load_index(index_path: str, meta_path: str) -> Tuple[faiss.IndexFlatL2, np.ndarray]:
     if not os.path.exists(index_path) or not os.path.exists(meta_path):
         raise RuntimeError(
-            "FAISS index or metadata not found in backend/rag_data/. "
+            "FAISS index or metadata not found in database/rag_data/. "
             "Run `python -m backend.build_index` from the project root to build the RAG index."
         )
 

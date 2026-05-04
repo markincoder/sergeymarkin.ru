@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p /app/database /app/backend/rag_data
+RUN mkdir -p /app/database/rag_data
 
 EXPOSE 8000
 

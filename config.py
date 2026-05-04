@@ -16,8 +16,8 @@ load_dotenv(BASE_DIR / ".env", encoding="utf-8-sig", override=True)
 
 from backend.openai_key import openai_api_key  # noqa: E402
 
-# FAQ/RAG: не в database/ — том Docker монтируется на database/, иначе перекрыл бы RAG из образа
-RAG_DATA_DIR = BASE_DIR / "backend" / "rag_data"
+# FAQ/RAG: database/rag_data/ рядом с SQLite (database/app.db). В Docker том смонтирован на /app/database — держите rag_data в том же томе.
+RAG_DATA_DIR = BASE_DIR / "database" / "rag_data"
 
 
 class Config:

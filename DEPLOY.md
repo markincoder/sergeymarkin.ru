@@ -12,7 +12,7 @@
 
 | Вариант | Где `docker-compose.yml` | Где код и `.env` | Данные сайта |
 |--------|---------------------------|------------------|--------------|
-| **A (рекомендуется)** | `/home/sergeymarkin/docker/` | Там же — весь клон репозитория | Том **`sergeymarkin_database`** → **`/app/database`** (SQLite). **RAG** — в образе (`backend/rag_data/`). |
+| **A (рекомендуется)** | `/home/sergeymarkin/docker/` | Там же — весь клон репозитория | Том **`sergeymarkin_database`** → **`/app/database`** (SQLite **`app.db`** и **`rag_data/`**). |
 | **B (часто на сервере)** | `/home/sergeymarkin/docker/docker-compose.yml` | Подпапка **`sergeymarkin/`** (`Dockerfile`, **`.env` приложения**) | То же; в `docker-compose.yml` по умолчанию **`./sergeymarkin`** — отдельный **`~/docker/.env` не обязателен**. |
 
 Дальше по шагам — **вариант A** = один каталог с репозиторием, **B** = `~/docker` + `~/docker/sergeymarkin/`.
@@ -164,7 +164,7 @@ docker compose up -d
 
 ## Шаг 6. RAG-индекс (перед сборкой образа или после смены FAQ)
 
-Индекс FAISS входит **в образ**. После правок **`backend/rag_data/`** (`faq-items.json`, `*.txt`) выполните **в клоне репозитория** (нужен `OPENAI_API_KEY` в окружении или `.env`):
+Индекс FAISS в **`database/rag_data/`** (в образе и в томе **`/app/database`**). После правок **`database/rag_data/`** (`faq-items.json`, `*.txt`) выполните **в клоне репозитория** (нужен `OPENAI_API_KEY` в окружении или `.env`):
 
 ```bash
 python -m backend.build_index
@@ -190,7 +190,7 @@ curl -s https://sergeymarkin.ru/api/health
 
 ## Данные: именованный volume и бэкап
 
-Имя тома в Docker: **`sergeymarkin_database`** (см. `docker volume ls`). Содержимое **`/app/database`**: **`app.db`** и т.д. Пересборка образа **`docker compose build`** том **не трогает**.
+Имя тома в Docker: **`sergeymarkin_database`** (см. `docker volume ls`). Содержимое **`/app/database`**: **`app.db`**, каталог **`rag_data/`** (FAISS и тексты FAQ). Пересборка образа **`docker compose build`** том **не трогает**.
 
 **Бэкап на хост:**
 
@@ -237,7 +237,7 @@ docker compose build sergeymarkin-web
 docker compose up -d sergeymarkin-web
 ```
 
-База **`app.db`** в volume **`sergeymarkin_database`** (`/app/database/`) при пересборке образа **не теряется**. Удаляется только при **`docker compose down -v`** или `docker volume rm` — делайте бэкап. **RAG** обновляется только с **новым образом** после `build_index` в репозитории.
+База **`app.db`** и **`rag_data/`** в volume **`sergeymarkin_database`** (`/app/database/`) при пересборке образа **не теряются**. Удаляются только при **`docker compose down -v`** или `docker volume rm` — делайте бэкап. После **`python -m backend.build_index`** закоммитьте обновлённые файлы в **`database/rag_data/`** и пересоберите образ **или** скопируйте каталог в том на сервере.
 
 ---
 
@@ -262,7 +262,7 @@ sudo systemctl status docker
 | Два роутера на один домен | Убедитесь, что **`sergeymarkin-nginx` удалён** из compose и контейнер не в `docker ps -a`. |
 | Нет прав на SQLite | Том: `docker compose exec sergeymarkin-web ls -la /app/database`. |
 | Пропали данные после `down` | Команда **`docker compose down -v`** удаляет именованные volumes — не используйте `-v` без бэкапа. |
-| RAG не отвечает | В образе есть `backend/rag_data/faiss_index.bin`, `OPENAI_API_KEY`; локально пересоберите индекс и образ; `GET /api/health`. |
+| RAG не отвечает | В **`database/rag_data/`** есть `faiss_index.bin`, задан `OPENAI_API_KEY`; локально `python -m backend.build_index`, при необходимости скопируйте `rag_data` в том; `GET /api/health`. |
 | Сертификат | Совпадение `entrypoints=websecure`, `certresolver=mytlschallenge` с Traefik; папка `./traefik` с `acme.json` доступна для записи. |
 
 ---

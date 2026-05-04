@@ -94,7 +94,7 @@ def main():
 
     if not items:
         raise RuntimeError(
-            f"Нет данных для индекса: положите {FAQ_JSON} и/или *.txt в backend/rag_data/, "
+            f"Нет данных для индекса: положите {FAQ_JSON} и/или *.txt в database/rag_data/, "
             "затем снова запустите этот скрипт и пересоберите Docker-образ."
         )
 

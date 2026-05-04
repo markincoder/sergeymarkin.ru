@@ -96,7 +96,7 @@ services:
     environment:
       SITE_URL: https://sergeymarkin.ru
     volumes:
-      # SQLite в database/; RAG — в backend/rag_data/ в образе (не под томом).
+      # SQLite и RAG — в томе database/ (app.db и database/rag_data на хосте).
       - sergeymarkin_database:/app/database
     labels:
       - "traefik.enable=true"

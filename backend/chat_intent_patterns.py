@@ -9,7 +9,7 @@ from typing import Final
 
 from config import BASE_DIR
 
-_PATH: Final = BASE_DIR / "backend" / "rag_data" / "chat_intent_patterns.json"
+_PATH: Final = BASE_DIR / "database" / "rag_data" / "chat_intent_patterns.json"
 _FLAGS = re.I | re.UNICODE
 
 _blob = json.loads(_PATH.read_text(encoding="utf-8"))

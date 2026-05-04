@@ -6,7 +6,7 @@ __pycache__
 *.pyc
 *.pyo
 .env
-# SQLite с хоста в образ не копируем (в проде — том на /app/database). RAG — backend/rag_data/ в образе.
+# SQLite с хоста в образ не копируем (в проде — том на /app/database). RAG — database/rag_data/ на хосте и в томе.
 database/app.db
 *.md
 .cursor

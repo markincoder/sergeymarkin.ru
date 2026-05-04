@@ -135,8 +135,8 @@ def _rag_unavailable_detail() -> str:
         parts.append("не задан OPENAI_API_KEY в окружении контейнера (docker compose env_file → sergeymarkin/.env)")
     if _index is None or _metadata is None:
         parts.append(
-            "нет FAISS-индекса в backend/rag_data — пересоберите образ после `python -m backend.build_index` "
-            "(данные RAG в образе; том только на database/)."
+            "нет FAISS-индекса в database/rag_data — выполните `python -m backend.build_index`; "
+            "в Docker каталог в томе `/app/database` рядом с SQLite (скопируйте `rag_data` при деплое, либо держите его в репозитории и пересоберите образ)."
         )
     return "Чат недоступен: " + ("; ".join(parts) if parts else "сервис не инициализирован.")
 
