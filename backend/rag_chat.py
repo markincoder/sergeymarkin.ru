@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from config import BASE_DIR, Config, RAG_DATA_DIR, get_notify_config
 
+from .chat_intent_patterns import CASUAL_SOCIAL_RE, FOLLOW_HINT_RE, QUESTION_HINT_RE
 from .openai_key import openai_api_key
 
 from .operator_bridge import (
@@ -150,30 +151,10 @@ def _weak_rag(distances: list[float], threshold: float) -> bool:
     return distances[0] > threshold
 
 
-_Q_HINT = re.compile(
-    r"(?:^|[\s,.:»\"'])(как\b|что\b|чем\b|где\b|когда\b|почему\b|зачем\b|кто\b|сколько\b|какой\b|какая\b|какие\b|"
-    r"можно\s+ли|есть\s+ли|будет\s+ли|подскажи|расскажи|объясни|покажи|\bhelp\b|what\b|how\b|why\b|can\s+you)",
-    re.I | re.UNICODE,
-)
-
-_FOLLOW_HINT = re.compile(
-    r"^(а\b|и\b|но\b|ещё\b|еще\b|тогда\b|уточн|про\b|если\b|а вот|в\s+дополнение|дополнительно\b)",
-    re.I | re.UNICODE,
-)
-
-# Соц. болталка без запроса по услугам — не гоним в RAG (ответ про зону компетенций отдельно).
-_CASUAL_SOCIAL = re.compile(
-    r"как\s+(дела|ты|жизнь|настроение|поживаешь)\b|что\s+нового|как\s+у\s+тебя\b|"
-    r"(сходим|пошли|пойд(ём|ем))(\s+в)?\s*(кафе|бар|кино|ресторан|гости)\b|"
-    r"выпьем\b|кофе\s*$|погод[аеуы]?\b|как\s+погод|выходн|отдыхаешь",
-    re.I | re.UNICODE,
-)
-
-
 def _wants_specialist_boundary_reply(text: str) -> bool:
     """Бытовой оффтоп вне коротких приветствий — про зону компетенций."""
     low = text.lower().strip()
-    if _CASUAL_SOCIAL.search(low):
+    if CASUAL_SOCIAL_RE.search(low):
         return True
     if re.match(r"^(пока|до свидания)\b", low):
         return True
@@ -186,12 +167,12 @@ def _looks_like_question_or_followup(text: str, has_prior_assistant: bool) -> bo
     if not t:
         return False
     low = t.lower()
-    # Раньше «?» и _Q_HINT — иначе «как дела?» уходит к оператору как «вопрос».
-    if _CASUAL_SOCIAL.search(low):
+    # Раньше «?» и QUESTION_HINT_RE — иначе «как дела?» уходит к оператору как «вопрос».
+    if CASUAL_SOCIAL_RE.search(low):
         return False
     if "?" in t:
         return True
-    if _Q_HINT.search(t):
+    if QUESTION_HINT_RE.search(t):
         return True
     if (
         re.match(
@@ -205,7 +186,7 @@ def _looks_like_question_or_followup(text: str, has_prior_assistant: bool) -> bo
     if has_prior_assistant:
         if re.match(r"^(да|нет|ага|угу|неа|yes|no)\s*!?\s*$", low):
             return True
-        if _FOLLOW_HINT.search(t):
+        if FOLLOW_HINT_RE.search(t):
             return True
         if len(t) >= 12 and "спасибо" not in low and "благодар" not in low:
             if (
@@ -492,30 +473,29 @@ def chat_post(body: ChatRequest) -> dict[str, Any]:
             add_line(db, sid, "assistant", reply)
             return _with_notice({"answer": reply, "session_id": sid, "operator_active": False})
 
-        qv = _embed(q)
-        hits, dists = search_similar(_index, _metadata, qv, k=3)
-        weak = _weak_rag(dists, Config.RAG_HANDOFF_L2_MAX)
-
-        if weak and _telegram_ready(cfg):
-            try:
-                on_topic = _classify_on_topic(q)
-            except Exception as e:
-                logger.warning("On-topic classify failed: %s", e)
-                on_topic = False
-            if on_topic:
-                bridge.handoff_confirm_pending = True
-                db.add(bridge)
-                db.commit()
-                add_line(db, sid, "assistant", _OFFER_OPERATOR_AFTER_WEAK_RAG)
-                return _with_notice({
-                    "answer": _OFFER_OPERATOR_AFTER_WEAK_RAG,
-                    "session_id": sid,
-                    "operator_active": False,
-                })
-
-        context = _hits_to_labeled_context(hits)
-
         try:
+            qv = _embed(q)
+            hits, dists = search_similar(_index, _metadata, qv, k=3)
+            weak = _weak_rag(dists, Config.RAG_HANDOFF_L2_MAX)
+
+            if weak and _telegram_ready(cfg):
+                try:
+                    on_topic = _classify_on_topic(q)
+                except Exception as e:
+                    logger.warning("On-topic classify failed: %s", e)
+                    on_topic = False
+                if on_topic:
+                    bridge.handoff_confirm_pending = True
+                    db.add(bridge)
+                    db.commit()
+                    add_line(db, sid, "assistant", _OFFER_OPERATOR_AFTER_WEAK_RAG)
+                    return _with_notice({
+                        "answer": _OFFER_OPERATOR_AFTER_WEAK_RAG,
+                        "session_id": sid,
+                        "operator_active": False,
+                    })
+
+            context = _hits_to_labeled_context(hits)
             answer = _run_rag_answer(q, context)
         except PermissionDeniedError as e:
             logger.warning("OpenAI permission: %s", e)
