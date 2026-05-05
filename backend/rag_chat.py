@@ -28,6 +28,7 @@ from .operator_bridge import (
     notify_handoff,
     notify_visitor_message_in_operator_thread,
     parse_operator_close_command,
+    register_reply_branch_for_session,
     release_operator_line_to_rag,
     resolve_session_from_plain_text,
     resolve_session_from_reply_chain,
@@ -608,7 +609,8 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
             rmid = reply_to.get("message_id") if isinstance(reply_to, dict) else None
             logger.info(
                 "Telegram webhook: сессия не определена (reply_to message_id=%s, в тексте нет session/UUID "
-                "активной сессии operator). Нужен «Ответить» на сообщение бота или строка session: <uuid> из уведомления.",
+                "активной сессии operator). «Ответить» на любое сообщение в той же ветке (бот, история, посетитель, "
+                "ответ оператора) или строка session: <uuid>.",
                 rmid,
             )
             return {"ok": "true"}
@@ -641,6 +643,7 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
                 raise HTTPException(status_code=500, detail="database_error") from e
             logger.info("Telegram webhook: оператор закрыл сессию %s", session_id)
             return {"ok": "true"}
+        register_reply_branch_for_session(db, msg, session_id)
         try:
             saved = append_operator_message(db, session_id, text)
         except Exception as e:

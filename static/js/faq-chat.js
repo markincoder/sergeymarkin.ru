@@ -105,14 +105,6 @@
         if (typeof notice === "string" && notice.length) {
           appendMessage(notice, "bot");
         }
-        // Только явный false останавливает poll; иначе сбой парсинга/прокси не гасит long-poll.
-        if (data.operator_active === false) {
-          stopPolling();
-          return;
-        }
-        if (data.operator_active !== true) {
-          return;
-        }
         var list = data.messages || [];
         var maxSeq = after;
         for (var i = 0; i < list.length; i++) {
@@ -125,6 +117,11 @@
           }
         }
         if (maxSeq > after) setLastOpSeq(maxSeq);
+        // Явный false останавливает poll; не требуем operator_active === true, чтобы показать messages
+        // (иначе отличное от boolean true из-за прокси/кэша глотало ответы оператора).
+        if (data.operator_active === false) {
+          stopPolling();
+        }
       })
       .catch(function () {
         pollInFlight = false;

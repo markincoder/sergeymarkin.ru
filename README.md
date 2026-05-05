@@ -255,15 +255,19 @@ TELEGRAM_WEBHOOK_SECRET=длинная_случайная_строка
 Пример для **PowerShell** (`^` — перенос строки; в bash уберите `^` и вставьте одну строку):
 
 ```bash
-curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" ^
-  -d "url=https://<ВАШ_ХОСТ>/api/telegram/webhook" ^
-  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET_как_в_.env>"
+curl -s "https://api.telegram.org/bot8586792650:AAE5SQSAuG_t7PBFEqZcafoSIi1BjIBWvys/setWebhook" ^
+  -d "url=https://sergeymarkin.ru/api/telegram/webhook" ^
+  -d "secret_token=1283716287yasijdhkajs"
 ```
+
+curl -s "https://api.telegram.org/bot8586792650:AAE5SQSAuG_t7PBFEqZcafoSIi1BjIBWvys/setWebhook" \
+  -F "url=https://sergeymarkin.ru/api/telegram/webhook" \
+  -F "secret_token=1283716287yasijdhkajs"
 
 **4. Проверка**
 
 ```bash
-curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
+curl -s "https://api.telegram.org/bot8586792650:AAE5SQSAuG_t7PBFEqZcafoSIi1BjIBWvys/getWebhookInfo"
 ```
 
 Смотрите `url` и при ошибках — `last_error_message`.
@@ -293,7 +297,7 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 ## Docker
 
-Сборка и запуск из каталога с `Dockerfile` (порт **8000**). Типичный сервер: **`docker-compose.yml`** в `~/docker/`, код и **`.env` приложения** в **`~/docker/sergeymarkin/`** — отдельный `~/docker/.env` **не нужен** (пути по умолчанию `./sergeymarkin`). Если весь репозиторий в одной папке с `docker-compose.yml`, в **корневом `.env`** добавьте **`SERGEYMARKIN_APP_DIR=.`** (см. `compose-host.env.example`).
+Типичная схема: **`docker compose`** из **`~/docker/`**, **`docker-compose.yml`** и папка **`sergeymarkin/`** (клон): **`.env` приложения** — **`~/docker/sergeymarkin/.env`** (пути по умолчанию **`./sergeymarkin`**). Если весь репозиторий в одной папке с **`docker-compose.yml`**, в **`.env`** задайте **`SERGEYMARKIN_APP_DIR=.`**.
 
 В `docker-compose.yml` том **`sergeymarkin_database`** смонтирован в **`/app/database`** (SQLite и **`rag_data`**). Не используйте **`docker compose down -v`** без бэкапа — ключ `-v` удалит том с БД и RAG.
 
