@@ -255,14 +255,14 @@ TELEGRAM_WEBHOOK_SECRET=длинная_случайная_строка
 Пример для **PowerShell** (`^` — перенос строки; в bash уберите `^` и вставьте одну строку):
 
 ```bash
-curl -s "https://api.telegram.org/bot8586792650:AAE5SQSAuG_t7PBFEqZcafoSIi1BjIBWvys/setWebhook" ^
+curl -s "https://api.telegram.org/bot.../setWebhook" ^
   -d "url=https://sergeymarkin.ru/api/telegram/webhook" ^
-  -d "secret_token=1283716287yasijdhkajs"
+  -d "secret_token=..."
 ```
 
-curl -s "https://api.telegram.org/bot8586792650:AAE5SQSAuG_t7PBFEqZcafoSIi1BjIBWvys/setWebhook" \
+curl -s "https://api.telegram.org/bot.../setWebhook" \
   -F "url=https://sergeymarkin.ru/api/telegram/webhook" \
-  -F "secret_token=1283716287yasijdhkajs"
+  -F "secret_token=..."
 
 **4. Проверка**
 
