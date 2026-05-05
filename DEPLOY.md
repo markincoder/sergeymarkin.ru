@@ -131,7 +131,7 @@ volumes:
     name: sergeymarkin_database
 ```
 
-По умолчанию **`SERGEYMARKIN_APP_DIR`** = **`./sergeymarkin`** (схема `~/docker` + `~/docker/sergeymarkin/.env`). Если **`docker-compose.yml` и проект в одной папке**, в **корневом `.env`** задайте **`SERGEYMARKIN_APP_DIR=.`**.
+По умолчанию **`SERGEYMARKIN_APP_DIR`** = **`./sergeymarkin`** — **`docker compose`** из **`~/docker/`**, рядом каталог **`sergeymarkin/`** (клон) и файл **`~/docker/sergeymarkin/.env`**. Если **`docker-compose.yml` лежит в корне клона** (всё в одной папке), в **`.env` рядом с compose** задайте **`SERGEYMARKIN_APP_DIR=.`**.
 
 Сеть **`web`** должна существовать: `docker network create web` (если ещё не создана для Traefik).
 
@@ -191,6 +191,8 @@ curl -s https://sergeymarkin.ru/api/health
 ## Данные: именованный volume и бэкап
 
 Имя тома в Docker: **`sergeymarkin_database`** (см. `docker volume ls`). Содержимое **`/app/database`**: **`app.db`**, каталог **`rag_data/`** (FAISS и тексты FAQ). Пересборка образа **`docker compose build`** том **не трогает**.
+
+**Первый запуск и пустой `rag_data`:** том монтируется на **`/app/database`** и **перекрывает** каталог из образа. В образе есть **`docker-entrypoint.sh`**: если в **`/app/database/rag_data/faq-items.json`** файла ещё нет, скрипт копирует в том снимок **`_image_rag_data`** из образа (тексты FAQ и при необходимости уже собранный FAISS). После **`docker compose up`** перезапустите контейнер один раз после обновления образа или выполните **`docker compose up -d --force-recreate sergeymarkin-web`**. Если `faq-items.json` в томе уже есть (старый деплой), автокопирование **не** затирает ваши данные.
 
 **Бэкап на хост:**
 

@@ -94,8 +94,11 @@ def main():
 
     if not items:
         raise RuntimeError(
-            f"Нет данных для индекса: положите {FAQ_JSON} и/или *.txt в database/rag_data/, "
-            "затем снова запустите этот скрипт и пересоберите Docker-образ."
+            f"Нет данных для индекса: положите {FAQ_JSON} и/или *.txt в {DATA_DIR}/, "
+            "затем снова запустите этот скрипт. "
+            "В Docker: том на /app/database перекрывает каталог из образа — при первом запуске контейнера "
+            "должен выполниться docker-entrypoint (копирование rag_data в том); иначе скопируйте database/rag_data "
+            "в том вручную или пересоберите образ и перезапустите сервис."
         )
 
     texts = [f"{item['question']}\n{item['answer']}" for item in items]

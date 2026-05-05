@@ -14,6 +14,9 @@ from models import ChatBridgeLine, ChatBridgeSession, TelegramBridgeMap
 
 logger = logging.getLogger(__name__)
 
+# Лимит sendMessage Telegram; с запасом под разметку при дроблении истории.
+_HANDOFF_CHUNK = 3600
+
 _SITE = re.compile(r"https?://[^\s]+", re.I)
 # Текст сообщения оператора / цитаты: session: …, сессия=…, либо голый UUID активной сессии operator.
 _SESSION_TOKEN = re.compile(
@@ -198,6 +201,18 @@ def transcript_lines(db: Session, session_id: str) -> list[ChatBridgeLine]:
     )
 
 
+def read_transcript_for_handoff(session_id: str) -> str:
+    """Прочитать историю отдельной сессией БД после commit в запросе chat_post — иначе в Telegram могла
+    уходить неполная выборка (вид оператору: «только последняя реплика»)."""
+    from db import SessionLocal
+
+    rdb = SessionLocal()
+    try:
+        return format_transcript_for_telegram(rdb, session_id)
+    finally:
+        rdb.close()
+
+
 def format_transcript_for_telegram(db: Session, session_id: str) -> str:
     label = {"user": "Посетитель", "assistant": "Бот (RAG)", "operator": "Оператор"}
     parts: list[str] = []
@@ -209,6 +224,29 @@ def format_transcript_for_telegram(db: Session, session_id: str) -> str:
 
 def register_bot_telegram_message(db: Session, telegram_msg_id: int, session_id: str) -> None:
     db.merge(TelegramBridgeMap(telegram_msg_id=int(telegram_msg_id), session_id=session_id))
+    db.commit()
+
+
+def register_reply_branch_for_session(db: Session, telegram_message: dict[str, Any], session_id: str) -> None:
+    """
+    Привязать к session_id message_id текущего апдейта и всех предков по reply_to_message.
+    Тогда следующий ответ с «Ответить» на любое из этих сообщений найдёт сессию (не только на бота).
+    """
+    ids: list[int] = []
+    mid = telegram_message.get("message_id")
+    if mid is not None:
+        ids.append(int(mid))
+    cur: dict[str, Any] | None = telegram_message.get("reply_to_message")
+    while isinstance(cur, dict):
+        pmid = cur.get("message_id")
+        if pmid is not None:
+            ids.append(int(pmid))
+        nxt = cur.get("reply_to_message")
+        cur = nxt if isinstance(nxt, dict) else None
+    if not ids:
+        return
+    for i in ids:
+        db.merge(TelegramBridgeMap(telegram_msg_id=i, session_id=session_id))
     db.commit()
 
 
@@ -266,31 +304,47 @@ def notify_handoff(
     sess = db.get(ChatBridgeSession, session_id)
     if not sess:
         return False
-    body = format_transcript_for_telegram(db, session_id)
-    text = (
+    body = read_transcript_for_handoff(session_id)
+    intro = (
         "🔔 Чат сайта — нужен оператор\n\n"
         "Чтобы ответ попал посетителю в виджет на сайте:\n"
         "• Нажмите «Ответить» на это сообщение бота и напишите текст; или\n"
         "• В любой ответ в этот чат вставьте строку (можно одной первой строкой):\n"
         f"session: {session_id}\n\n"
         "Завершить консультацию с посетителем: /end или /закрыть (опционально свой текст: /end Спасибо за обращение).\n\n"
-        "--- История чата ---\n"
-        f"{body}"
+        "Полная история диалога — в следующем сообщении (или нескольких), если переписка длинная."
     )
-    if len(text) > 4000:
-        text = text[:3997] + "..."
+    hist = "--- История чата ---\n" + (body or "(пусто)")
     try:
-        mid = send_message(cfg, text=text, reply_to_message_id=None)
+        anchor_mid = send_message(cfg, text=intro)
+        register_bot_telegram_message(db, anchor_mid, session_id)
+
+        total_parts = max(1, (len(hist) + _HANDOFF_CHUNK - 1) // _HANDOFF_CHUNK)
+        pos = 0
+        part_i = 0
+        while pos < len(hist):
+            part_i += 1
+            slice_end = min(pos + _HANDOFF_CHUNK, len(hist))
+            piece = hist[pos:slice_end]
+            pos = slice_end
+            # В каждой части — session, чтобы ответ без «Ответить» всё равно попал в виджет.
+            header = f"session: {session_id}\n\n"
+            if total_parts > 1:
+                piece = header + f"История чата, часть {part_i}/{total_parts}\n\n" + piece
+            else:
+                piece = header + piece
+            mid_h = send_message(cfg, text=piece)
+            register_bot_telegram_message(db, mid_h, session_id)
+
+        sess.telegram_anchor_id = anchor_mid
+        sess.mode = "operator"
+        sess.handoff_confirm_pending = False
+        db.add(sess)
+        db.commit()
+        return True
     except Exception as e:
         logger.exception("Telegram handoff failed: %s", e)
         return False
-    register_bot_telegram_message(db, mid, session_id)
-    sess.telegram_anchor_id = mid
-    sess.mode = "operator"
-    sess.handoff_confirm_pending = False
-    db.add(sess)
-    db.commit()
-    return True
 
 
 def notify_visitor_message_in_operator_thread(

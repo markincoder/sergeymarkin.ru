@@ -82,8 +82,8 @@ services:
       - web
 
   # ================= Sergeymarkin =================
-  # По умолчанию: compose в ~/docker, код и .env в ~/docker/sergeymarkin/ (отдельный .env у родителя не нужен).
-  # Клон репозитория в один каталог (Dockerfile рядом с compose): в корневом .env задайте SERGEYMARKIN_APP_DIR=.
+  # По умолчанию: compose в ~/docker/, код и .env в ~/docker/sergeymarkin/
+  # Если весь репозиторий в одной папке с compose — в .env: SERGEYMARKIN_APP_DIR=.
   sergeymarkin-web:
     build:
       context: ${SERGEYMARKIN_APP_DIR:-./sergeymarkin}

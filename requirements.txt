@@ -15,7 +15,7 @@ requests>=2.31.0,<3
 
 gunicorn>=22.0.0,<24
 
-# RAG / embeddings
-openai>=1.40.0,<2
+# RAG / embeddings (2.x совместим с тем же API клиента; нужно, если рядом стоит langchain-openai и др.)
+openai>=1.40.0,<3
 faiss-cpu>=1.8.0,<2
 numpy>=1.26.0,<3
