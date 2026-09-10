@@ -3,3 +3,4 @@
  * При необходимости — добавьте аналитику или маски для телефона.
  */
 document.documentElement.classList.add('js-ready');
+
