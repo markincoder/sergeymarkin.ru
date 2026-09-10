@@ -19,3 +19,4 @@ gunicorn>=22.0.0,<24
 openai>=1.40.0,<3
 faiss-cpu>=1.8.0,<2
 numpy>=1.26.0,<3
+pillow>=10.0.0,<12

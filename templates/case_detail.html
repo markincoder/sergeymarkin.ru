@@ -30,6 +30,9 @@
         {{ case.detail | safe }}
       </div>
       <div class="mt-4 d-flex flex-wrap gap-2">
+        {% for link in case.links | default([]) %}
+        <a href="{{ link.href }}" class="btn btn-outline-light" target="_blank" rel="noopener">{{ link.label }}</a>
+        {% endfor %}
         <a href="{{ url_for('contact') }}" class="btn btn-accent">Обсудить похожий проект</a>
         <a href="{{ url_for('cases_list') }}" class="btn btn-outline-light">Все примеры</a>
       </div>

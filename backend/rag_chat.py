@@ -339,10 +339,11 @@ _EXPLICIT_HANDOFF_UNAVAILABLE = (
 _ALREADY_WITH_OPERATOR = (
     "Диалог уже у оператора — напишите ваш вопрос в этом окне, ответ появится здесь."
 )
-# В режиме operator не использовать _NEUTRAL_REPLY (он звучит как FAQ-бот без оператора).
-_OPERATOR_IDLE_REPLY = (
-    "Вы на связи с оператором. Напишите вопрос по услугам или сайту — ответ появится здесь."
+_OPERATOR_FOLLOWUP_TELEGRAM_FAILED = (
+    "Сообщение не удалось доставить в Telegram (нет связи или сбой API). Повторите через минуту "
+    "или напишите через форму «Обратная связь» на сайте — режим оператора всё ещё активен."
 )
+# В режиме operator не использовать _NEUTRAL_REPLY (он звучит как FAQ-бот без оператора).
 
 _NEUTRAL_REPLY = (
     "Спасибо за сообщение. Если будут вопросы по нашим услугам или содержанию сайта — напишите, отвечу по делу."
@@ -426,23 +427,29 @@ def chat_post(body: ChatRequest) -> dict[str, Any]:
                         "session_id": sid,
                         "operator_active": True,
                     })
-                # Короткие приветствия / не-вопросы не дублируем в Telegram (избегаем шума и ложного «эскалация»).
-                if not _looks_like_question_or_followup(q, has_prior_assistant):
-                    reply = (
-                        _SPECIALIST_SCOPE_REPLY
-                        if _wants_specialist_boundary_reply(q)
-                        else _OPERATOR_IDLE_REPLY
+                # На оператора пересылаем все реплики посетителя (не эвристика RAG): иначе короткие
+                # «понял», «спасибо», ответы < 12 символов без «?» не уходят в Telegram — создаётся
+                # ощущение «переписка оборвалась».
+                if _telegram_ready(cfg):
+                    forwarded = notify_visitor_message_in_operator_thread(
+                        db, sid, q, cfg, send_telegram_bot_message
                     )
-                    add_line(db, sid, "assistant", reply)
+                    if forwarded:
+                        add_line(db, sid, "assistant", _OPERATOR_ACK)
+                        return _with_notice({
+                            "answer": _OPERATOR_ACK,
+                            "session_id": sid,
+                            "operator_active": True,
+                        })
+                    add_line(db, sid, "assistant", _OPERATOR_FOLLOWUP_TELEGRAM_FAILED)
                     return _with_notice({
-                        "answer": reply,
+                        "answer": _OPERATOR_FOLLOWUP_TELEGRAM_FAILED,
                         "session_id": sid,
                         "operator_active": True,
                     })
-                notify_visitor_message_in_operator_thread(db, sid, q, cfg, send_telegram_bot_message)
-                add_line(db, sid, "assistant", _OPERATOR_ACK)
+                add_line(db, sid, "assistant", _EXPLICIT_HANDOFF_UNAVAILABLE)
                 return _with_notice({
-                    "answer": _OPERATOR_ACK,
+                    "answer": _EXPLICIT_HANDOFF_UNAVAILABLE,
                     "session_id": sid,
                     "operator_active": True,
                 })

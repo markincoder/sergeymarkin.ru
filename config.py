@@ -34,7 +34,7 @@ class Config:
     LOG_LEVEL = os.environ.get("LOG_LEVEL") or "INFO"
 
     SITE_URL = os.environ.get("SITE_URL") or "https://sergeymarkin.ru"
-    SEO_OG_IMAGE = os.environ.get("SEO_OG_IMAGE") or "/static/images/hero-profile.svg"
+    SEO_OG_IMAGE = os.environ.get("SEO_OG_IMAGE") or "/static/images/hero-profile.jpg"
 
     CHAT_API_BASE = (os.environ.get("CHAT_API_BASE") or "").strip().rstrip("/")
     # Через запятую origins для CORS (например https://www.site.ru,https://site.ru). Нужно, если HTML с одного origin, а CHAT_API_BASE — с другого.

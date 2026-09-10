@@ -6,7 +6,7 @@
   <p class="text-muted text-center mb-4">Заполните поля — я свяжусь с вами по email или Telegram.</p>
 
   <div class="card card-glass p-4 p-md-5 rounded-4">
-    <form method="post" novalidate>
+    <form method="post" novalidate class="position-relative">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
       <div class="mb-3">
@@ -38,8 +38,37 @@
         <textarea name="body" id="id_body" class="form-control" rows="4" placeholder="Кратко опишите задачу (необязательно)" maxlength="5000">{{ form_values.get('body', '') }}</textarea>
       </div>
 
+      <div class="hp-field" aria-hidden="true">
+        <label for="id_website">Сайт</label>
+        <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="mb-4 contact-captcha">
+        <div class="contact-captcha-row">
+          <img src="/contact/captcha.png?t={{ captcha_bust }}" alt="Код с картинки" id="captcha-img" class="contact-captcha-img" width="220" height="72" onclick="reloadContactCaptcha()">
+          <button type="button" class="btn btn-outline-light btn-sm" id="captcha-refresh" aria-label="Обновить картинку" onclick="reloadContactCaptcha(); return false;">↻</button>
+        </div>
+        <label class="form-label" for="id_captcha">Введите символы с картинки</label>
+        <input type="text" name="captcha" id="id_captcha" class="form-control{% if field_errors.get('captcha') %} is-invalid{% endif %}" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="8" placeholder="Код с картинки">
+        {% for err in field_errors.get('captcha', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        <div class="form-text">Нажмите на картинку или ↻, чтобы обновить код.</div>
+      </div>
+
       <button type="submit" class="btn btn-accent w-100 py-2">Отправить</button>
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function reloadContactCaptcha() {
+  var img = document.getElementById("captcha-img");
+  if (!img) return false;
+  img.src = "/contact/captcha.png?refresh=1&t=" + Date.now();
+  var input = document.getElementById("id_captcha");
+  if (input) input.value = "";
+  return false;
+}
+</script>
 {% endblock %}

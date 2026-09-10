@@ -2,9 +2,12 @@
 """FastAPI: публичные страницы, форма, админка, RAG API."""
 from __future__ import annotations
 
+import hmac
 import logging
+import secrets
 import sys
 import threading
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -20,6 +23,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from backend.captcha_image import normalize_code, random_code, render_png
 from backend.rag_chat import init_rag, router as rag_router
 from cases_data import CASES, get_case_by_slug
 from config import Config
@@ -135,7 +139,7 @@ def _seo_context(request: Request) -> dict[str, Any]:
     if not path.startswith("/"):
         path = "/" + path
     canonical = site + path
-    og_img = site + (Config.SEO_OG_IMAGE or "/static/images/hero-profile.svg")
+    og_img = site + (Config.SEO_OG_IMAGE or "/static/images/hero-profile.jpg")
     person_ld = {
         "@context": "https://schema.org",
         "@type": "Person",
@@ -201,9 +205,52 @@ def _tpl(
     return templates.TemplateResponse(name, ctx, status_code=status_code)
 
 
-def _csrf_ensure(request: Request) -> str:
-    import secrets
+def _captcha_issue(request: Request) -> str:
+    code = random_code()
+    request.session["contact_captcha"] = {
+        "code": code,
+        "exp": time.time() + 15 * 60,
+    }
+    return code
 
+
+def _captcha_ok(request: Request, user_answer: str) -> bool:
+    data = request.session.pop("contact_captcha", None)
+    if not data or time.time() > float(data.get("exp") or 0):
+        return False
+    expected = normalize_code(str(data.get("code") or "")).encode("utf-8")
+    got = normalize_code(user_answer).encode("utf-8")
+    if not expected or len(expected) != len(got):
+        return False
+    return hmac.compare_digest(expected, got)
+
+
+def _contact_page(
+    request: Request,
+    *,
+    status_code: int = 200,
+    field_errors: dict[str, list[str]] | None = None,
+    form_values: dict[str, str] | None = None,
+) -> HTMLResponse:
+    _captcha_issue(request)
+    return _tpl(
+        request,
+        "contact.html",
+        csrf_token=_csrf_ensure(request),
+        field_errors=field_errors or {},
+        form_values=form_values or {},
+        captcha_bust=secrets.token_urlsafe(8),
+        seo_title="Обратная связь",
+        meta_desc=(
+            "Свяжитесь со мной: форма обратной связи. Обсудим проект, сроки и автоматизацию с ИИ. "
+            "Сергей Маркин, prompt engineer."
+        ),
+        og_title="Обратная связь — Сергей Маркин",
+        status_code=status_code,
+    )
+
+
+def _csrf_ensure(request: Request) -> str:
     tok = request.session.get("csrf_token")
     if not tok:
         tok = secrets.token_urlsafe(32)
@@ -288,19 +335,7 @@ def case_detail(request: Request, slug: str):
 
 @app.get("/contact", response_class=HTMLResponse, name="contact")
 def contact_get(request: Request):
-    return _tpl(
-        request,
-        "contact.html",
-        csrf_token=_csrf_ensure(request),
-        field_errors={},
-        form_values={},
-        seo_title="Обратная связь",
-        meta_desc=(
-            "Свяжитесь со мной: форма обратной связи. Обсудим проект, сроки и автоматизацию с ИИ. "
-            "Сергей Маркин, prompt engineer."
-        ),
-        og_title="Обратная связь — Сергей Маркин",
-    )
+    return _contact_page(request)
 
 
 @app.post("/contact", response_class=HTMLResponse)
@@ -312,11 +347,25 @@ def contact_post(
     phone: str = Form(""),
     subject: str = Form(""),
     body: str = Form(""),
+    captcha: str = Form(""),
+    website: str = Form(""),
     csrf_token: str = Form(""),
 ):
+    if (website or "").strip():
+        logger.warning("Форма обратной связи: honeypot заполнен, заявка отброшена")
+        _add_flash(request, "Спасибо! Сообщение отправлено. Мы свяжемся с вами.", "success")
+        return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
     if not _csrf_check(request, csrf_token):
         _add_flash(request, "Ошибка сессии. Обновите страницу и попробуйте снова.", "danger")
         return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
+    values = {"name": name, "email": email, "phone": phone, "subject": subject, "body": body}
+    if not _captcha_ok(request, captcha):
+        return _contact_page(
+            request,
+            status_code=422,
+            field_errors={"captcha": ["Неверный код с картинки. Попробуйте ещё раз."]},
+            form_values=values,
+        )
     try:
         data = ContactFormSchema(
             name=name,
@@ -327,22 +376,19 @@ def contact_post(
         )
     except ValidationError as e:
         errs: dict[str, list[str]] = {}
-        values = {"name": name, "email": email, "phone": phone, "subject": subject, "body": body}
         for err in e.errors():
             loc = err.get("loc", ())
             if loc:
                 field = str(loc[0])
-                errs.setdefault(field, []).append(str(err.get("msg", "Ошибка")))
-        return _tpl(
+                msg = str(err.get("msg") or "Проверьте это поле")
+                if msg.lower().startswith("value error, "):
+                    msg = msg[13:]
+                errs.setdefault(field, []).append(msg)
+        return _contact_page(
             request,
-            "contact.html",
-            csrf_token=_csrf_ensure(request),
+            status_code=422,
             field_errors=errs,
             form_values=values,
-            seo_title="Обратная связь",
-            meta_desc="Свяжитесь со мной: форма обратной связи.",
-            og_title="Обратная связь — Сергей Маркин",
-            status_code=422,
         )
 
     msg = ContactMessage(
@@ -359,6 +405,28 @@ def contact_post(
     _enqueue_contact_notifications(msg.id)
     _add_flash(request, "Спасибо! Сообщение отправлено. Мы свяжемся с вами.", "success")
     return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
+
+
+@app.get("/contact/captcha.png", include_in_schema=False)
+def contact_captcha_png(request: Request):
+    refresh = request.query_params.get("refresh")
+    data = request.session.get("contact_captcha")
+    expired = not data or time.time() > float((data or {}).get("exp") or 0)
+    if refresh or expired or not (data or {}).get("code"):
+        _captcha_issue(request)
+        data = request.session.get("contact_captcha") or {}
+    code = str((data or {}).get("code") or "")
+    if not code:
+        code = _captcha_issue(request)
+    png = render_png(code)
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 @app.get("/robots.txt", response_class=Response)
@@ -579,6 +647,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     from fastapi.responses import JSONResponse
 
     return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
+
+app.mount("/", StaticFiles(directory=str(BASE_DIR / "public")), name="public")
 
 
 if __name__ == "__main__":
