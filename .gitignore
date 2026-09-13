@@ -19,7 +19,10 @@ database/*.db
 .vscode/
 *.swp
 
-# Flask
+# Flask / Deploy secrets
 instance/
 .env
 .env.local
+deploy_secrets.env
+!deploy_secrets.env.example
+deploy_config.json

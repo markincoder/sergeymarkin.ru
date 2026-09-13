@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from xml.sax.saxutils import escape
@@ -25,7 +26,8 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from backend.captcha_image import normalize_code, random_code, render_png
 from backend.rag_chat import init_rag, router as rag_router
-from cases_data import CASES, get_case_by_slug
+from backend.spam_protection import check_submission_for_spam
+from cases_data import CASES, CATEGORIES, get_case_by_slug, get_related_cases
 from config import Config
 from db import SessionLocal, get_db, init_db
 from models import ContactMessage, User
@@ -144,27 +146,85 @@ def _seo_context(request: Request) -> dict[str, Any]:
         "@context": "https://schema.org",
         "@type": "Person",
         "name": "Сергей Маркин",
-        "jobTitle": "Prompt Engineer",
-        "description": "Промпт-инженер и специалист по AI, вайб-кодинг, автоматизация бизнес-процессов.",
+        "jobTitle": "AI Solutions Architect & Automation Engineer",
+        "description": "AI-инженер и архитектор автоматизации бизнес-процессов. Разработка RAG-ассистентов, сценариев n8n, чат-ботов в Telegram и AI-продуктов.",
         "url": site + "/",
         "image": og_img,
         "email": "markincoder@gmail.com",
         "telephone": "+7-951-743-16-09",
         "sameAs": ["https://t.me/markin_coder"],
         "knowsAbout": [
-            "AI",
+            "Artificial Intelligence",
+            "AI Agents",
             "Prompt Engineering",
-            "RAG",
-            "n8n",
-            "Telegram bots",
-            "Notion",
+            "RAG Systems",
+            "Vector Databases",
+            "FAISS",
+            "n8n Automation",
+            "Telegram Bots",
+            "Python",
+            "FastAPI",
+            "Flutter",
         ],
+    }
+    service_ld = {
+        "@context": "https://schema.org",
+        "@type": "ProfessionalService",
+        "name": "Сергей Маркин — AI & Автоматизация бизнеса",
+        "image": og_img,
+        "url": site + "/",
+        "telephone": "+7-951-743-16-09",
+        "email": "markincoder@gmail.com",
+        "priceRange": "$$",
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "RU",
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Услуги AI автоматизации",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Разработка RAG-ассистентов по базам знаний",
+                        "description": "Внедрение умных ботов для ответов по документам компании 24/7 без галлюцинаций.",
+                    },
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Сквозная автоматизация процессов на n8n",
+                        "description": "Интеграция CRM, мессенджеров, почты и LLM-обработки для отделов продаж и HR.",
+                    },
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Чат-боты в Telegram для бизнеса",
+                        "description": "Квалификация лидов, скоринг звонков, автоматическая запись на консультации.",
+                    },
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Экспресс-аудит бизнес-процессов",
+                        "description": "Поиск точек внедрения искусственного интеллекта с максимальным ROI за 24-48 часов.",
+                    },
+                },
+            ],
+        },
     }
     return {
         "site_url": site,
         "canonical_url": canonical,
         "seo_og_image": og_img,
         "seo_person_ld": person_ld,
+        "seo_service_ld": service_ld,
     }
 
 
@@ -215,9 +275,12 @@ def _captcha_issue(request: Request) -> str:
 
 
 def _captcha_ok(request: Request, user_answer: str) -> bool:
+    if not user_answer:
+        # Безбарьерный режим: защита через CSRF + honeypot
+        return True
     data = request.session.pop("contact_captcha", None)
     if not data or time.time() > float(data.get("exp") or 0):
-        return False
+        return True
     expected = normalize_code(str(data.get("code") or "")).encode("utf-8")
     got = normalize_code(user_answer).encode("utf-8")
     if not expected or len(expected) != len(got):
@@ -290,12 +353,13 @@ def cases_list(request: Request):
         request,
         "cases.html",
         cases=CASES,
+        categories=CATEGORIES,
         seo_title="Примеры работ",
         meta_desc=(
             "Примеры работ: экономия времени HR на скрининге, поддержка в Telegram по документам, "
-            "задачи после созвонов в CRM, быстрые ответы посетителям сайта. Сергей Маркин, prompt engineer."
+            "задачи после созвонов в CRM, быстрые ответы посетителям сайта. Сергей Маркин, AI-инженер."
         ),
-        og_title="Примеры работ — Сергей Маркин | AI и автоматизация",
+        og_title="Примеры работ и кейсы — Сергей Маркин | AI и автоматизация",
     )
 
 
@@ -325,6 +389,7 @@ def case_detail(request: Request, slug: str):
         request,
         "case_detail.html",
         case=case,
+        related_cases=get_related_cases(slug, 3),
         seo_title=case["title"],
         meta_desc=case["short"],
         og_title=f'{case["title"]} — пример работ | Сергей Маркин',
@@ -335,7 +400,10 @@ def case_detail(request: Request, slug: str):
 
 @app.get("/contact", response_class=HTMLResponse, name="contact")
 def contact_get(request: Request):
-    return _contact_page(request)
+    request.session["contact_opened_at"] = time.time()
+    subj = request.query_params.get("subject", "")
+    init_vals = {"subject": subj} if subj else None
+    return _contact_page(request, form_values=init_vals)
 
 
 @app.post("/contact", response_class=HTMLResponse)
@@ -351,13 +419,31 @@ def contact_post(
     website: str = Form(""),
     csrf_token: str = Form(""),
 ):
-    if (website or "").strip():
-        logger.warning("Форма обратной связи: honeypot заполнен, заявка отброшена")
-        _add_flash(request, "Спасибо! Сообщение отправлено. Мы свяжемся с вами.", "success")
-        return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
     if not _csrf_check(request, csrf_token):
         _add_flash(request, "Ошибка сессии. Обновите страницу и попробуйте снова.", "danger")
         return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
+
+    # Защита от спама: Honeypot, Timing, Rate-limit, блок-лист ключевых слов и доменов
+    is_spam, spam_reason = check_submission_for_spam(
+        request,
+        name=name,
+        email=email,
+        phone=phone,
+        subject=subject,
+        body=body,
+        website=website,
+    )
+    if is_spam:
+        logger.warning(
+            "Форма обратной связи: спам отклонён (%s) — email=%s name=%s",
+            spam_reason,
+            email,
+            name,
+        )
+        # Нейтральный ответ успеха боту, без сохранения в БД и без уведомлений
+        _add_flash(request, "Спасибо! Сообщение отправлено. Мы свяжемся с вами.", "success")
+        return RedirectResponse(url=str(request.url_for("contact")), status_code=303)
+
     values = {"name": name, "email": email, "phone": phone, "subject": subject, "body": body}
     if not _captcha_ok(request, captcha):
         return _contact_page(
@@ -435,7 +521,11 @@ def robots_txt(request: Request):
     body = f"""User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /contact/captcha.png
 
+Host: sergeymarkin.ru
 Sitemap: {site}/sitemap.xml
 """
     return Response(content=body, media_type="text/plain; charset=utf-8")
@@ -444,6 +534,7 @@ Sitemap: {site}/sitemap.xml
 @app.get("/sitemap.xml", response_class=Response)
 def sitemap_xml(request: Request):
     site = Config.SITE_URL.rstrip("/")
+    today = datetime.now().strftime("%Y-%m-%d")
     urls = [
         ("", "weekly", "1.0"),
         ("/cases", "weekly", "0.9"),
@@ -459,6 +550,7 @@ def sitemap_xml(request: Request):
     for loc, changefreq, priority in urls:
         lines.append("  <url>")
         lines.append(f"    <loc>{escape(site + loc)}</loc>")
+        lines.append(f"    <lastmod>{today}</lastmod>")
         lines.append(f"    <changefreq>{changefreq}</changefreq>")
         lines.append(f"    <priority>{priority}</priority>")
         lines.append("  </url>")

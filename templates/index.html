@@ -1,74 +1,364 @@
 {% extends "base.html" %}
 
 {% block content %}
-{# Контент главной; оболочка — base.html #}
-<section class="hero-section text-center py-5 mb-2">
+<!-- Hero Section -->
+<section class="hero-section text-center">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-10">
-        <img src="/static/images/hero-profile.jpg" alt="Сергей Маркин" class="hero-image img-fluid rounded-4 shadow-lg mb-4 animate-fade-in" width="320" height="320" loading="eager">
-        <h1 class="display-6 fw-bold text-gradient mb-3 animate-fade-in delay-1">Привет! Я Сергей Маркин, prompt engineer.</h1>
-        <p class="lead text-muted mb-4 animate-fade-in delay-2">Трансформирую хаос в алгоритмы. Сокращаю затраты времени на типовые операции до 50% с помощью ИИ.</p>
-        <a href="#cases-preview" class="btn btn-outline-light btn-lg me-2 mb-2">Смотреть примеры работ</a>
-        <a href="{{ url_for('contact') }}" class="btn btn-accent btn-lg mb-2">Написать мне</a>
+        
+        <!-- Status Pill -->
+        <div class="animate-fade-in">
+          <div class="status-pill">
+            <span class="status-dot-pulse"></span>
+            <span>Открыт к новым проектам · Пилот за 5 дней</span>
+          </div>
+        </div>
+
+        <!-- Avatar with Glow -->
+        <div class="hero-avatar-container animate-fade-in delay-1">
+          <div class="hero-avatar-glow"></div>
+          <img src="/static/images/hero-profile.jpg" alt="Сергей Маркин" class="hero-image" width="200" height="200" loading="eager">
+          <div class="hero-badge-pill">AI Solutions Architect</div>
+        </div>
+
+        <!-- Headline & Subtitle -->
+        <h1 class="display-5 fw-bold text-gradient mb-3 animate-fade-in delay-2">
+          AI-инженер &amp; Архитектор автоматизации для бизнеса
+        </h1>
+        <p class="lead col-lg-9 mx-auto mb-4 animate-fade-in delay-3">
+          Разрабатываю умных RAG-ассистентов по корпоративным базам знаний, сквозные сценарии n8n и автономные AI-продукты. 
+          Сокращаю ручной труд отделов продаж, HR и клиентской поддержки на <strong>40–70%</strong>.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="d-flex flex-wrap justify-content-center gap-3 animate-fade-in delay-3 mb-2">
+          <a href="#cases-preview" class="btn btn-outline-light btn-lg">
+            Смотреть кейсы
+          </a>
+          <a href="https://t.me/markin_coder" class="btn btn-telegram btn-lg" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+            <span>Обсудить задачу в Telegram</span>
+          </a>
+          <a href="{{ url_for('contact') }}" class="btn btn-accent btn-lg">
+            Оставить заявку
+          </a>
+        </div>
+
+        <!-- Trust bar -->
+        <div class="hero-features-bar">
+          <div class="hero-feat-item">
+            <span class="hero-feat-icon">⚡</span>
+            <span><strong>5 дней</strong> на запуск пилота</span>
+          </div>
+          <div class="hero-feat-item">
+            <span class="hero-feat-icon">🎯</span>
+            <span><strong>9+</strong> готовых внедрений</span>
+          </div>
+          <div class="hero-feat-item">
+            <span class="hero-feat-icon">🛡</span>
+            <span><strong>Без галлюцинаций</strong> (RAG по фактам)</span>
+          </div>
+          <div class="hero-feat-item">
+            <span class="hero-feat-icon">🤝</span>
+            <span>Бесшовный перевод на человека</span>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </section>
 
-<section class="py-4">
+<!-- Tech Arsenal & Competencies (Bento Grid) -->
+<section class="py-5">
   <div class="container">
-    <div class="card-glass p-4 p-md-5 rounded-4">
-      <h2 class="h4 text-accent mb-4">Специализация</h2>
-      <p class="mb-3">Я — промпт-инженер и эксперт по <strong>вайб-кодингу</strong>. Мой подход заключается в сверхбыстрой сборке рабочих бизнес-решений с использованием LLM и инструментов low-code автоматизации.</p>
-      <ul class="list-unstyled mb-4">
-        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Prompt Engineering:</strong> проектирование сложных промптов для идеального результата от нейросетей.</li>
-        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Vibe Coding:</strong> стремительная разработка и итерация продуктов, ориентированная на результат, а не на процесс.</li>
-        <li class="mb-0"><span class="text-accent me-2">▸</span> <strong>AI-Интеграция:</strong> внедрение искусственного интеллекта в существующую IT-инфраструктуру компании.</li>
-      </ul>
-      <h2 class="h4 text-accent mb-4">Ценность для бизнеса</h2>
-      <p class="mb-3">Я не просто «внедряю нейросети», а решаю конкретные финансовые и операционные задачи:</p>
-      <ul class="list-unstyled mb-0">
-        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Освобождение ресурса:</strong> передаю до 50% рутины (почта, отчёты, CRM) ИИ-агентам.</li>
-        <li class="mb-2"><span class="text-accent me-2">▸</span> <strong>Масштабируемость:</strong> создаю системы, которые обрабатывают в 10 раз больше заявок без найма новых сотрудников.</li>
-        <li class="mb-0"><span class="text-accent me-2">▸</span> <strong>Чистая выгода:</strong> снижаю операционные издержки и риск «человеческого фактора» в критических узлах бизнеса.</li>
-      </ul>
+    <div class="text-center mb-5">
+      <h2 class="h3 fw-bold text-gradient mb-2">Технологический арсенал</h2>
+      <p class="text-muted col-lg-7 mx-auto">
+        Не просто «пишу промпты», а создаю надёжные архитектурные решения: от векторного поиска до серверных API и мобильных интерфейсов.
+      </p>
+    </div>
+
+    <div class="tech-bento-grid">
+      
+      <!-- Card 1: LLM & Reasoning -->
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-card-icon">🧠</div>
+          <div>
+            <h3 class="h5 mb-1 text-white">LLM &amp; Модели рассуждений</h3>
+            <span class="small text-muted">Продвинутый промпт-инжиниринг и логика</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Тонкая настройка системных промптов, Few-Shot сценарии, Chain-of-Thought, структурированный JSON-вывод, работа с топ-моделями и локальными LLM.
+        </p>
+        <div class="tech-tag-group">
+          <span class="tech-tag">GPT-4o</span>
+          <span class="tech-tag">Claude 3.5 Sonnet</span>
+          <span class="tech-tag">DeepSeek V3 / R1</span>
+          <span class="tech-tag">Ollama / Local LLM</span>
+        </div>
+      </div>
+
+      <!-- Card 2: RAG & Vector Search -->
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-card-icon">📚</div>
+          <div>
+            <h3 class="h5 mb-1 text-white">RAG &amp; Корпоративные базы знаний</h3>
+            <span class="small text-muted">Поиск по смыслу без галлюцинаций</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Семантическая индексация регламентов, тарифов, Notion и PDF. Поиск фактов по вектору смыслов с точным указанием первоисточника и плейбуков.
+        </p>
+        <div class="tech-tag-group">
+          <span class="tech-tag">FAISS</span>
+          <span class="tech-tag">ChromaDB</span>
+          <span class="tech-tag">Embeddings</span>
+          <span class="tech-tag">Парсинг документов</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Automation & Integrations -->
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-card-icon">⚙️</div>
+          <div>
+            <h3 class="h5 mb-1 text-white">Автоматизация &amp; n8n</h3>
+            <span class="small text-muted">Сквозные бизнес-пайплайны без рутины</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Связка CRM, мессенджеров, почты и ИИ-обработчиков. Автоматический разбор звонков, постановка задач, скоринг резюме и рассылка отчётов.
+        </p>
+        <div class="tech-tag-group">
+          <span class="tech-tag">n8n</span>
+          <span class="tech-tag">Python &amp; FastAPI</span>
+          <span class="tech-tag">Webhooks</span>
+          <span class="tech-tag">AmoCRM / Bitrix24</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Interfaces & Products -->
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-card-icon">📱</div>
+          <div>
+            <h3 class="h5 mb-1 text-white">Интерфейсы &amp; Приложения</h3>
+            <span class="small text-muted">Удобный доступ для клиентов и команды</span>
+          </div>
+        </div>
+        <p class="small text-muted mb-3">
+          Интеллектуальные боты в Telegram с переключением на живого оператора, веб-интерфейсы и мобильные приложения для iOS и Android.
+        </p>
+        <div class="tech-tag-group">
+          <span class="tech-tag">Telegram Bot API</span>
+          <span class="tech-tag">Flutter (iOS/Android)</span>
+          <span class="tech-tag">Docker</span>
+          <span class="tech-tag">Биллинг / МИР</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
+<!-- Interactive AI ROI Calculator -->
+<section class="py-5" id="roi-calc">
+  <div class="container">
+    <div class="roi-calculator-box">
+      <div class="row g-4 align-items-center">
+        
+        <div class="col-lg-7">
+          <div class="d-inline-flex align-items-center gap-2 mb-2">
+            <span class="status-dot-pulse"></span>
+            <span class="small fw-bold text-accent">Экспресс-оценка окупаемости</span>
+          </div>
+          <h2 class="h3 fw-bold text-white mb-3">Сколько времени и денег сэкономит ИИ вашей компании?</h2>
+          <p class="text-muted small mb-4">
+            Выберите направление и размер отдела, чтобы рассчитать примерный объём высвобождаемых часов и экономии фонда оплаты труда (ФОТ).
+          </p>
+
+          <!-- Department Selector -->
+          <div class="calc-control-group">
+            <span class="calc-label">1. Какое направление автоматизируем?</span>
+            <div class="calc-chips" id="calc-dept-chips">
+              <button type="button" class="calc-chip-btn active" data-dept="sales">Отдел продаж (лиды, CRM, звонки)</button>
+              <button type="button" class="calc-chip-btn" data-dept="hr">HR и рекрутинг (скрининг резюме)</button>
+              <button type="button" class="calc-chip-btn" data-dept="support">Поддержка (L1, FAQ, Telegram)</button>
+              <button type="button" class="calc-chip-btn" data-dept="ops">Операции и документооборот</button>
+            </div>
+          </div>
+
+          <!-- Team Size Selector -->
+          <div class="calc-control-group mb-0">
+            <span class="calc-label">2. Сколько сотрудников занято рутинными задачами?</span>
+            <div class="calc-chips" id="calc-team-chips">
+              <button type="button" class="calc-chip-btn active" data-team="small">1–3 человека</button>
+              <button type="button" class="calc-chip-btn" data-team="medium">4–8 человек</button>
+              <button type="button" class="calc-chip-btn" data-team="large">9+ человек</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="col-lg-5">
+          <div class="calc-output-card">
+            <span class="small text-muted text-uppercase fw-bold letter-spacing-1 mb-2">Расчётный эффект внедрения:</span>
+            
+            <div class="my-3">
+              <div class="calc-stat-value text-gradient-cyan" id="calc-hours-out">до 50–70 ч</div>
+              <span class="small text-muted">высвобождаемого времени команды в месяц</span>
+            </div>
+
+            <div class="my-2 py-2 border-top border-bottom border-dark">
+              <div class="h4 fw-bold text-white mb-0" id="calc-money-out">~75 000 – 120 000 ₽</div>
+              <span class="small text-muted">ежемесячная экономия ФОТ на рутине</span>
+            </div>
+
+            <div class="small text-accent mt-2 mb-3" id="calc-payback-out">Срок окупаемости пилота: от 2–3 недель</div>
+
+            <a href="https://t.me/markin_coder" target="_blank" rel="noopener" class="btn btn-accent btn-sm w-100 py-2">
+              Получить персональный расчёт
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How I Work / 3 Steps -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="h3 fw-bold text-gradient mb-2">Прозрачный процесс работы</h2>
+      <p class="text-muted col-lg-7 mx-auto">
+        Никаких абстрактных месяцев разработки. Работаем короткими спринтами с гарантией измеримого результата.
+      </p>
+    </div>
+
+    <div class="process-grid">
+      
+      <div class="process-step-card">
+        <span class="process-num-bg">01</span>
+        <div class="process-step-badge">Этап 1 · 24–48 часов</div>
+        <h3 class="h5 text-white mb-2">Экспресс-аудит</h3>
+        <p class="small text-muted mb-0">
+          Созваниваемся на 30 минут, разбираем цепочки операций в компании, находим «узкие горлышка» и определяем 3 ключевые точки внедрения ИИ с наивысшим ROI.
+        </p>
+      </div>
+
+      <div class="process-step-card">
+        <span class="process-num-bg">02</span>
+        <div class="process-step-badge">Этап 2 · 5 дней</div>
+        <h3 class="h5 text-white mb-2">Рабочий пилот (MVP)</h3>
+        <p class="small text-muted mb-0">
+          Собираем рабочий прототип на ваших реальных документах и задачах. Вы и ваша команда лично тестируете результат в боевых условиях до масштабных инвестиций.
+        </p>
+      </div>
+
+      <div class="process-step-card">
+        <span class="process-num-bg">03</span>
+        <div class="process-step-badge">Этап 3 · Продакшен</div>
+        <h3 class="h5 text-white mb-2">Внедрение &amp; Сопровождение</h3>
+        <p class="small text-muted mb-0">
+          Бесшовная интеграция в IT-контур (CRM, Telegram, базы данных), настройка переключения на оператора, обучение сотрудников и техническая поддержка.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Cases Section with Filters -->
 <section id="cases-preview" class="py-5">
   <div class="container">
-    <h2 class="h3 text-center mb-2">Примеры работ</h2>
-    <p class="text-muted text-center mb-5">Реальные решения: сайт под поиск клиентов, доступ к ИИ без VPN, микрозелень, IT-навигатор L1, запись на консультацию, разбор холодных звонков, HR, RAG в Telegram</p>
-    <div class="row g-4">
+    <div class="text-center mb-4">
+      <h2 class="h3 fw-bold text-gradient mb-2">Примеры реализованных решений</h2>
+      <p class="text-muted col-lg-8 mx-auto">
+        Реальные работающие системы: коммерческий SaaS, мобильные приложения в сторах, RAG-боты и B2B-автоматизации.
+      </p>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="filter-tabs-wrapper" id="case-filters">
+      <button type="button" class="filter-btn active" data-filter="all">Все проекты ({{ cases | length }})</button>
+      <button type="button" class="filter-btn" data-filter="rag">RAG &amp; AI-боты</button>
+      <button type="button" class="filter-btn" data-filter="automation">Автоматизация &amp; n8n</button>
+      <button type="button" class="filter-btn" data-filter="products">SaaS &amp; Приложения</button>
+    </div>
+
+    <!-- Cases Grid -->
+    <div class="row g-4" id="cases-grid">
       {% for c in cases %}
-      <div class="col-md-6 col-xl-4">
-        <article class="card case-card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="col-md-6 col-xl-4 case-item" data-category="{{ c.category | default('all') }}">
+        <article class="card case-card h-100 border-0 shadow-sm">
+          
           <div class="case-card-img-wrap">
-            <img src="/static/images/{{ c.image }}" class="card-img-top" alt="{{ c.title }}">
+            {% if c.kpi_badge %}
+            <span class="kpi-badge">{{ c.kpi_badge }}</span>
+            {% endif %}
+            <img src="/static/images/{{ c.image }}" class="card-img-top" alt="{{ c.title }}" loading="lazy">
           </div>
-          <div class="card-body d-flex flex-column">
-            <h3 class="h5 card-title">{{ c.title }}</h3>
-            <p class="card-text text-muted small flex-grow-1">{{ c.short }}</p>
-            <a href="{{ url_for('case_detail', slug=c.slug) }}" class="btn btn-outline-accent btn-sm mt-2 stretched-link">Подробнее</a>
+
+          <div class="card-body d-flex flex-column p-4">
+            <span class="case-category-pill">{{ c.category_name | default('AI Решение') }}</span>
+            <h3 class="h5 card-title text-white mb-2">{{ c.title }}</h3>
+            <p class="card-text text-muted small flex-grow-1 mb-3">{{ c.short }}</p>
+            
+            <div class="tech-chips-wrap mb-3">
+              {% for tag in c.tags | default([]) %}
+              <span class="tech-chip">{{ tag }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-dark mt-auto">
+              <span class="small text-accent fw-bold">Подробнее о кейсе →</span>
+              <a href="{{ url_for('case_detail', slug=c.slug) }}" class="stretched-link" aria-label="{{ c.title }}"></a>
+            </div>
           </div>
+
         </article>
       </div>
       {% endfor %}
     </div>
+
     <div class="text-center mt-5">
-      <a href="{{ url_for('cases_list') }}" class="btn btn-outline-light">Все примеры работ</a>
+      <a href="{{ url_for('cases_list') }}" class="btn btn-outline-light px-4">
+        Смотреть каталог кейсов с деталями
+      </a>
     </div>
+
   </div>
 </section>
 
-<section class="py-5 cta-section rounded-4 mx-3 mx-md-auto mb-4" style="max-width: 900px;">
-  <div class="container text-center py-4">
-    <h2 class="h4 mb-3">Давайте проверим ваш бизнес на прочность</h2>
-    <p class="text-muted mb-4">Запишитесь на короткий аудит: я проанализирую ваши процессы и предложу <strong>3 точки для автоматизации</strong>, которые дадут результат уже через неделю.</p>
-    <a href="{{ url_for('contact') }}" class="btn btn-accent btn-lg px-5 me-2 mb-2">Перейти к форме обратной связи</a>
-    <a href="https://t.me/markin_coder" class="btn btn-outline-light btn-lg mb-2" target="_blank" rel="noopener">Записаться на консультацию в Telegram</a>
+<!-- Final CTA Banner -->
+<section class="py-5 mx-3 mx-md-auto mb-4" style="max-width: 960px;">
+  <div class="card-glass p-4 p-md-5 text-center position-relative overflow-hidden">
+    <div class="position-relative z-2">
+      <div class="d-inline-flex align-items-center gap-2 mb-3">
+        <span class="status-dot-pulse"></span>
+        <span class="small text-accent fw-bold">Бесплатный разбор</span>
+      </div>
+      <h2 class="h3 fw-bold text-white mb-3">Готовы проверить процессы на прочность?</h2>
+      <p class="text-muted col-md-9 mx-auto mb-4">
+        Запишитесь на 30-минутный разбор: я изучу ваши регламенты или цепочки рутины и предложу <strong>3 точки автоматизации</strong>, которые окупятся в первый же месяц.
+      </p>
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a href="https://t.me/markin_coder" class="btn btn-telegram btn-lg px-4" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          <span>Написать мне в Telegram</span>
+        </a>
+        <a href="{{ url_for('contact') }}" class="btn btn-outline-light btn-lg px-4">
+          Оставить заявку на сайте
+        </a>
+      </div>
+    </div>
   </div>
 </section>
 {% endblock %}

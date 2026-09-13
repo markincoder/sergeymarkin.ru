@@ -1,60 +1,101 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 560px;">
-  <h1 class="h2 text-gradient text-center mb-2">Форма обратной связи</h1>
-  <p class="text-muted text-center mb-4">Заполните поля — я свяжусь с вами по email или Telegram.</p>
+<div class="container py-4" style="max-width: 640px;">
+  
+  <div class="text-center mb-4">
+    <div class="status-pill mb-2">
+      <span class="status-dot-pulse"></span>
+      <span>Связь напрямую без посредников</span>
+    </div>
+    <h1 class="display-6 fw-bold text-gradient mb-2">Обсудить проект</h1>
+    <p class="text-muted">Выберите удобный канал связи: быстрый чат в Telegram или заявку через форму.</p>
+  </div>
 
-  <div class="card card-glass p-4 p-md-5 rounded-4">
+  <!-- Priority 1-Click Telegram Box -->
+  <div class="card-glass p-4 text-center mb-4 border-primary">
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+      <span class="status-dot-pulse"></span>
+      <span class="small fw-bold text-accent">Самый быстрый способ связи</span>
+    </div>
+    <h2 class="h5 text-white mb-2">Написать напрямую в Telegram</h2>
+    <p class="small text-muted mb-3">
+      Задайте любой вопрос или отправьте аудиосообщение с описанием задачи. Отвечаю обычно в течение 15–30 минут.
+    </p>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <a href="https://t.me/markin_coder" class="btn btn-telegram px-4" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+        <span>Открыть диалог: @markin_coder</span>
+      </a>
+      <button type="button" class="btn btn-outline-light btn-sm px-3" id="btn-copy-tg" title="Скопировать никнейм">
+        <span id="copy-tg-text">Копировать ник</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="text-center my-3">
+    <span class="small text-muted text-uppercase fw-bold letter-spacing-1">— или отправьте заявку через форму —</span>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card card-glass p-4 p-md-5 rounded-4 shadow-lg">
     <form method="post" novalidate class="position-relative">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
+      <!-- Fast topic chips -->
       <div class="mb-3">
-        <label class="form-label" for="id_name">Имя</label>
+        <label class="form-label d-block">Быстрый выбор темы:</label>
+        <div class="quick-topic-chips" id="quick-topics">
+          <button type="button" class="quick-topic-btn" data-topic="RAG-ассистент по базе знаний">RAG-ассистент</button>
+          <button type="button" class="quick-topic-btn" data-topic="Автоматизация n8n + CRM">Автоматизация n8n</button>
+          <button type="button" class="quick-topic-btn" data-topic="Чат-бот в Telegram для бизнеса">Telegram-бот</button>
+          <button type="button" class="quick-topic-btn" data-topic="Экспресс-аудит процессов (30 мин)">Аудит процессов</button>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="id_name">Ваше имя</label>
         <input type="text" name="name" id="id_name" class="form-control{% if field_errors.get('name') %} is-invalid{% endif %}" placeholder="Иван Иванов" value="{{ form_values.get('name', '') }}" required minlength="2" maxlength="120">
         {% for err in field_errors.get('name', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
-      <div class="mb-3">
-        <label class="form-label" for="id_email">Email</label>
-        <input type="email" name="email" id="id_email" class="form-control{% if field_errors.get('email') %} is-invalid{% endif %}" placeholder="you@example.com" value="{{ form_values.get('email', '') }}" required maxlength="120">
-        {% for err in field_errors.get('email', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="id_phone">Телефон</label>
-        <input type="text" name="phone" id="id_phone" class="form-control{% if field_errors.get('phone') %} is-invalid{% endif %}" placeholder="+7 951 123 45 67" value="{{ form_values.get('phone', '') }}" required minlength="5" maxlength="40">
-        {% for err in field_errors.get('phone', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label" for="id_email">Email для связи</label>
+          <input type="email" name="email" id="id_email" class="form-control{% if field_errors.get('email') %} is-invalid{% endif %}" placeholder="you@company.ru" value="{{ form_values.get('email', '') }}" required maxlength="120">
+          {% for err in field_errors.get('email', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="id_phone">Телефон или Telegram</label>
+          <input type="text" name="phone" id="id_phone" class="form-control{% if field_errors.get('phone') %} is-invalid{% endif %}" placeholder="+7 951 123 45 67" value="{{ form_values.get('phone', '') }}" required minlength="5" maxlength="40">
+          {% for err in field_errors.get('phone', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+        </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label" for="id_subject">Тема сообщения</label>
-        <input type="text" name="subject" id="id_subject" class="form-control{% if field_errors.get('subject') %} is-invalid{% endif %}" placeholder="Тема обращения" value="{{ form_values.get('subject', '') }}" required minlength="3" maxlength="200">
+        <input type="text" name="subject" id="id_subject" class="form-control{% if field_errors.get('subject') %} is-invalid{% endif %}" placeholder="Например: Автоматизация разбора входящих заявок" value="{{ form_values.get('subject', '') }}" required minlength="3" maxlength="200">
         {% for err in field_errors.get('subject', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
       </div>
 
       <div class="mb-4">
-        <label class="form-label" for="id_body">Сообщение (необязательно)</label>
-        <textarea name="body" id="id_body" class="form-control" rows="4" placeholder="Кратко опишите задачу (необязательно)" maxlength="5000">{{ form_values.get('body', '') }}</textarea>
+        <label class="form-label" for="id_body">Описание задачи (необязательно)</label>
+        <textarea name="body" id="id_body" class="form-control" rows="4" placeholder="Кратко опишите текущий процесс, используемый стек или желаемый результат" maxlength="5000">{{ form_values.get('body', '') }}</textarea>
       </div>
 
+      <!-- Honeypot invisible protection field -->
       <div class="hp-field" aria-hidden="true">
         <label for="id_website">Сайт</label>
         <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
       </div>
 
-      <div class="mb-4 contact-captcha">
-        <div class="contact-captcha-row">
-          <img src="/contact/captcha.png?t={{ captcha_bust }}" alt="Код с картинки" id="captcha-img" class="contact-captcha-img" width="220" height="72" onclick="reloadContactCaptcha()">
-          <button type="button" class="btn btn-outline-light btn-sm" id="captcha-refresh" aria-label="Обновить картинку" onclick="reloadContactCaptcha(); return false;">↻</button>
-        </div>
-        <label class="form-label" for="id_captcha">Введите символы с картинки</label>
-        <input type="text" name="captcha" id="id_captcha" class="form-control{% if field_errors.get('captcha') %} is-invalid{% endif %}" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="8" placeholder="Код с картинки">
-        {% for err in field_errors.get('captcha', []) %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
-        <div class="form-text">Нажмите на картинку или ↻, чтобы обновить код.</div>
-      </div>
+      <button type="submit" class="btn btn-accent w-100 py-3 mb-2">
+        Отправить заявку →
+      </button>
 
-      <button type="submit" class="btn btn-accent w-100 py-2">Отправить</button>
+      <p class="text-center text-muted small mb-0">
+        🔒 Гарантирую конфиденциальность данных и не передаю информацию третьим лицам.
+      </p>
     </form>
   </div>
 </div>
@@ -62,13 +103,34 @@
 
 {% block extra_js %}
 <script>
-function reloadContactCaptcha() {
-  var img = document.getElementById("captcha-img");
-  if (!img) return false;
-  img.src = "/contact/captcha.png?refresh=1&t=" + Date.now();
-  var input = document.getElementById("id_captcha");
-  if (input) input.value = "";
-  return false;
-}
+document.addEventListener("DOMContentLoaded", function() {
+  // Копирование Telegram ника
+  var btnCopy = document.getElementById("btn-copy-tg");
+  var copyText = document.getElementById("copy-tg-text");
+  if (btnCopy && copyText) {
+    btnCopy.addEventListener("click", function() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText("@markin_coder").then(function() {
+          copyText.textContent = "Скопировано! ✓";
+          setTimeout(function() { copyText.textContent = "Копировать ник"; }, 2500);
+        });
+      }
+    });
+  }
+
+  // Быстрый выбор темы
+  var topicBtns = document.querySelectorAll(".quick-topic-btn");
+  var subjectInput = document.getElementById("id_subject");
+  topicBtns.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      topicBtns.forEach(function(b) { b.classList.remove("selected"); });
+      btn.classList.add("selected");
+      if (subjectInput) {
+        subjectInput.value = btn.getAttribute("data-topic");
+        subjectInput.focus();
+      }
+    });
+  });
+});
 </script>
 {% endblock %}
