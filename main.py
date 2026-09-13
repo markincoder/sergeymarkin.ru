@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
@@ -53,6 +54,23 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+class HeadMethodMiddleware(BaseHTTPMiddleware):
+    """Преобразование HEAD-запросов в GET для поддержки проверок доступности (curl -I, боты, мониторинг)."""
+
+    async def dispatch(self, request: Request, call_next):
+        is_head = request.method == "HEAD"
+        if is_head:
+            request.scope["method"] = "GET"
+        response = await call_next(request)
+        if is_head:
+            return Response(
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type,
+            )
+        return response
 
 
 def get_notify_cfg() -> dict[str, Any]:
@@ -128,6 +146,7 @@ if _cors_origins:
 app.add_middleware(SessionMiddleware, secret_key=Config.SECRET_KEY, max_age=14 * 24 * 3600)
 # Внешний слой: за Traefik client=172.x, иначе scheme=http и url_for ломает ссылки/CSS.
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+app.add_middleware(HeadMethodMiddleware)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 app.include_router(rag_router)
 
