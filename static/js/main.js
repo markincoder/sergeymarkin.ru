@@ -105,46 +105,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // =========================================================
-  // 3. Проактивный тизер для FAQ-виджета
-  // =========================================================
-  var teaserBubble = document.getElementById('chat-teaser-bubble');
-  var teaserClose = document.getElementById('chat-teaser-close');
-  var chatLauncher = document.getElementById('chat-launcher');
-  var chatWidget = document.getElementById('chat-widget');
-
-  if (teaserBubble && chatLauncher) {
-    var isDismissed = sessionStorage.getItem('faq_teaser_dismissed') === '1';
-
-    if (!isDismissed) {
-      setTimeout(function() {
-        // Показываем только если чат всё ещё закрыт
-        if (chatWidget && chatWidget.style.display === 'none') {
-          teaserBubble.style.display = 'block';
-        }
-      }, 4000);
-    }
-
-    if (teaserClose) {
-      teaserClose.addEventListener('click', function(e) {
-        e.stopPropagation();
-        teaserBubble.style.display = 'none';
-        sessionStorage.setItem('faq_teaser_dismissed', '1');
-      });
-    }
-
-    teaserBubble.addEventListener('click', function() {
-      teaserBubble.style.display = 'none';
-      sessionStorage.setItem('faq_teaser_dismissed', '1');
-      chatLauncher.click();
-    });
-
-    chatLauncher.addEventListener('click', function() {
-      if (teaserBubble) {
-        teaserBubble.style.display = 'none';
-        sessionStorage.setItem('faq_teaser_dismissed', '1');
-      }
-    });
-  }
-
 });

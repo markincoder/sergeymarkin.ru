@@ -4,28 +4,29 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.7);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  border: none;
   outline: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   z-index: 1040;
 }
 
 .chat-launcher:hover {
+  background: #1e293b;
+  border-color: rgba(59, 130, 246, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 16px 50px rgba(15, 23, 42, 0.9);
 }
 
 .chat-launcher span {
-  font-size: 30px;
+  font-size: 22px;
 }
 
 .chat-widget {

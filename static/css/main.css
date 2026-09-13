@@ -217,32 +217,14 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.status-dot,
 .status-dot-pulse {
   width: 8px;
   height: 8px;
   background-color: #10b981;
   border-radius: 50%;
-  position: relative;
-}
-
-.status-dot-pulse::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: 50%;
-  background: inherit;
-  opacity: 0.75;
-  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 /* =========================================================
@@ -260,12 +242,7 @@ body {
 }
 
 .hero-avatar-glow {
-  position: absolute;
-  inset: -12px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
-  border-radius: 28px;
-  filter: blur(14px);
-  z-index: 1;
+  display: none;
 }
 
 .hero-image {
@@ -760,52 +737,11 @@ body {
   overflow: hidden;
 }
 
-/* =========================================================
-   Проактивный бабл для FAQ-виджета
-   ========================================================= */
-.chat-teaser-bubble {
-  position: fixed;
-  bottom: 85px;
-  right: 24px;
-  max-width: 290px;
-  background: rgba(14, 21, 38, 0.95);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border-accent);
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  z-index: 1040;
-  animation: slideUpFade 0.4s ease forwards;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.chat-teaser-bubble:hover {
-  transform: translateY(-2px);
-}
-
-.chat-teaser-close {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-  cursor: pointer;
+.hero-feat-bullet {
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 1.1rem;
   line-height: 1;
-}
-
-@keyframes slideUpFade {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* =========================================================
@@ -842,16 +778,12 @@ body {
   color: #fca5a5;
 }
 
-/* Анимации */
+/* Спокойная статичная отрисовка без морганий */
 .animate-fade-in {
-  animation: fadeIn 0.7s ease forwards;
-  opacity: 0;
+  opacity: 1;
 }
-.animate-fade-in.delay-1 { animation-delay: 0.15s; }
-.animate-fade-in.delay-2 { animation-delay: 0.3s; }
-.animate-fade-in.delay-3 { animation-delay: 0.45s; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+.animate-fade-in.delay-1,
+.animate-fade-in.delay-2,
+.animate-fade-in.delay-3 {
+  opacity: 1;
 }
