@@ -16,12 +16,42 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://sergeymarkin.ru/cases/personal-site-leads</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sergeymarkin.ru/cases/iiproxy-ai-chat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sergeymarkin.ru/cases/agronizer-microgreens</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sergeymarkin.ru/cases/it-navigator-l1</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://sergeymarkin.ru/cases/hr-assistant</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://sergeymarkin.ru/cases/rag-telegram-bot</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sergeymarkin.ru/cases/consult-booking-bot</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sergeymarkin.ru/cases/cold-call-quality</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
