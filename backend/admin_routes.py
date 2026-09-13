@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from db import get_db
 from models import ContactMessage, User
 from schemas import LoginFormSchema
+from backend.spam_protection import add_to_blocklist, get_blocklist, remove_from_blocklist
 
 logger = logging.getLogger(__name__)
 
@@ -124,12 +125,15 @@ def register_admin_routes(
         messages = db.execute(
             select(ContactMessage).order_by(ContactMessage.created_at.desc())
         ).scalars().all()
+        blocklist = get_blocklist()
+        blocked_emails = [e.lower() for e in blocklist.get("blocked_emails", [])]
         return tpl_renderer(
             request,
             "admin/dashboard.html",
             csrf_token=csrf_ensure(request),
             messages=messages,
             current_user=user,
+            blocked_emails=blocked_emails,
             seo_noindex=True,
             seo_title="Заявки",
             meta_desc="Панель заявок с формы обратной связи.",
@@ -177,6 +181,30 @@ def register_admin_routes(
             logger.info("Заявка %s отмечена непрочитанной", message_id)
         return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
 
+    @app_router.post("/message/{message_id}/spam", name="admin_message_spam")
+    def admin_message_spam(
+        request: Request,
+        message_id: int,
+        db: Session = Depends(get_db),
+        csrf_token: str = Form(""),
+    ):
+        if not get_current_admin(db, request):
+            return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
+        if not csrf_check(request, csrf_token):
+            add_flash(request, "Ошибка CSRF.", "danger")
+            return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+        msg = db.get(ContactMessage, message_id)
+        if msg:
+            clean_email = msg.email.strip().lower()
+            add_to_blocklist(email=clean_email)
+            msg.is_read = True
+            db.commit()
+            logger.warning("Email %s добавлен в спам-лист через админку (заявка #%s)", clean_email, message_id)
+            add_flash(request, f"Адрес {clean_email} добавлен в чёрный список спама. Заявки и уведомления с этого адреса заблокированы.", "warning")
+        else:
+            add_flash(request, "Заявка не найдена.", "warning")
+        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+
     @app_router.post("/message/{message_id}/delete", name="admin_message_delete")
     def admin_message_delete(
         request: Request,
@@ -195,4 +223,44 @@ def register_admin_routes(
             db.commit()
             logger.info("Заявка %s удалена", message_id)
             add_flash(request, "Заявка удалена.", "info")
+        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+
+    @app_router.post("/blocklist/remove", name="admin_blocklist_remove")
+    def admin_blocklist_remove(
+        request: Request,
+        db: Session = Depends(get_db),
+        email: str = Form(""),
+        csrf_token: str = Form(""),
+    ):
+        if not get_current_admin(db, request):
+            return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
+        if not csrf_check(request, csrf_token):
+            add_flash(request, "Ошибка CSRF.", "danger")
+            return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+        clean_email = email.strip().lower()
+        if clean_email:
+            remove_from_blocklist(email=clean_email)
+            logger.info("Email %s удалён из спам-листа через админку", clean_email)
+            add_flash(request, f"Адрес {clean_email} удалён из спам-листа.", "info")
+        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+
+    @app_router.post("/blocklist/add", name="admin_blocklist_add")
+    def admin_blocklist_add(
+        request: Request,
+        db: Session = Depends(get_db),
+        email: str = Form(""),
+        csrf_token: str = Form(""),
+    ):
+        if not get_current_admin(db, request):
+            return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
+        if not csrf_check(request, csrf_token):
+            add_flash(request, "Ошибка CSRF.", "danger")
+            return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+        clean_email = email.strip().lower()
+        if clean_email and "@" in clean_email:
+            add_to_blocklist(email=clean_email)
+            logger.info("Email %s вручную добавлен в спам-лист через админку", clean_email)
+            add_flash(request, f"Адрес {clean_email} добавлен в чёрный список спама.", "success")
+        else:
+            add_flash(request, "Укажите корректный адрес email для блокировки.", "danger")
         return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)

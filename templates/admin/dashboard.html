@@ -33,7 +33,12 @@
           <td>{{ m.id }}</td>
           <td class="text-nowrap small">{{ m.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td>{{ m.name }}</td>
-          <td><a href="mailto:{{ m.email }}">{{ m.email }}</a></td>
+          <td>
+            <a href="mailto:{{ m.email }}">{{ m.email }}</a>
+            {% if m.email.lower() in blocked_emails %}
+            <br><span class="badge bg-danger mt-1">Спам (заблокирован)</span>
+            {% endif %}
+          </td>
           <td class="small">{{ m.phone }}</td>
           <td>
             <span title="{{ m.subject }}">{{ m.subject[:40] }}{% if m.subject|length > 40 %}…{% endif %}</span>
@@ -42,7 +47,9 @@
             {% endif %}
           </td>
           <td>
-            {% if m.is_read %}
+            {% if m.email.lower() in blocked_emails %}
+            <span class="badge bg-danger">Спамер</span>
+            {% elif m.is_read %}
             <span class="badge bg-secondary">Прочитано</span>
             {% else %}
             <span class="badge bg-info text-dark">Новое</span>
@@ -60,6 +67,20 @@
               <button type="submit" class="btn btn-outline-success btn-sm mb-1">Прочитано</button>
             </form>
             {% endif %}
+
+            {% if m.email.lower() in blocked_emails %}
+            <form method="post" action="{{ url_for('admin_blocklist_remove') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="hidden" name="email" value="{{ m.email }}">
+              <button type="submit" class="btn btn-outline-warning btn-sm mb-1" title="Удалить из спам-листа">Разблокировать</button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('admin_message_spam', message_id=m.id) }}" class="d-inline" onsubmit="return confirm('Пометить отправителя {{ m.email }} как спам? Заявки и уведомления от него больше не будут приниматься.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="btn btn-outline-warning btn-sm mb-1" title="Заблокировать спам-отправителя">В спам</button>
+            </form>
+            {% endif %}
+
             <form method="post" action="{{ url_for('admin_message_delete', message_id=m.id) }}" class="d-inline" onsubmit="return confirm('Удалить заявку #{{ m.id }}?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="btn btn-outline-danger btn-sm mb-1">Удалить</button>
@@ -71,6 +92,43 @@
     </table>
   </div>
   {% endif %}
+
+  <div class="mt-4 card card-glass rounded-4 p-4 border border-secondary border-opacity-25">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h2 class="h5 mb-1 text-light">🛡 Чёрный список email (Спам-фильтр)</h2>
+        <p class="text-muted small mb-0">С этих адресов входящие заявки не сохраняются в базу данных, а уведомления в Telegram и на почту не отправляются.</p>
+      </div>
+      <span class="badge bg-dark border border-secondary text-muted">Заблокировано: {{ blocked_emails|length }}</span>
+    </div>
+
+    <form method="post" action="{{ url_for('admin_blocklist_add') }}" class="row g-2 mb-3 align-items-center">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="col-sm-8 col-md-6 col-lg-4">
+        <input type="email" name="email" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="spammer@example.com" required>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-outline-warning btn-sm">Заблокировать email</button>
+      </div>
+    </form>
+
+    {% if blocked_emails %}
+    <div class="d-flex flex-wrap gap-2 pt-2">
+      {% for b_email in blocked_emails %}
+      <span class="badge bg-dark border border-danger border-opacity-50 p-2 d-inline-flex align-items-center gap-2 text-light">
+        <span class="text-danger">🚫</span> {{ b_email }}
+        <form method="post" action="{{ url_for('admin_blocklist_remove') }}" class="d-inline mb-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="email" value="{{ b_email }}">
+          <button type="submit" class="btn-close btn-close-white ms-1" style="font-size: 0.6rem;" title="Удалить из чёрного списка"></button>
+        </form>
+      </span>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">Список заблокированных адресов пуст.</p>
+    {% endif %}
+  </div>
 
   <p class="mt-4 small text-muted"><a href="{{ url_for('index') }}">← На сайт</a></p>
 </div>

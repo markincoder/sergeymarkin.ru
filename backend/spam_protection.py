@@ -119,6 +119,112 @@ def _ensure_blocklist_file() -> dict[str, Any]:
         }
 
 
+def get_blocklist() -> dict[str, Any]:
+    """Получить актуальный блок-лист спама."""
+    return _ensure_blocklist_file()
+
+
+def save_blocklist(data: dict[str, Any]) -> bool:
+    """Сохранить блок-лист в файл."""
+    try:
+        BLOCKLIST_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(BLOCKLIST_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        logger.error("Ошибка сохранения %s: %s", BLOCKLIST_FILE, e)
+        return False
+
+
+def add_to_blocklist(
+    *,
+    email: str | None = None,
+    ip: str | None = None,
+    keyword: str | None = None,
+) -> bool:
+    """Добавить адрес электронной почты, IP или ключевое слово в блок-лист."""
+    data = _ensure_blocklist_file()
+    changed = False
+
+    if email:
+        clean_email = email.strip().lower()
+        blocked_emails = data.setdefault("blocked_emails", [])
+        if clean_email and clean_email not in blocked_emails:
+            blocked_emails.append(clean_email)
+            changed = True
+
+    if ip:
+        clean_ip = ip.strip()
+        blocked_ips = data.setdefault("blocked_ips", [])
+        if clean_ip and clean_ip not in blocked_ips:
+            blocked_ips.append(clean_ip)
+            changed = True
+
+    if keyword:
+        clean_kw = keyword.strip().lower()
+        blocked_kw = data.setdefault("blocked_keywords", [])
+        if clean_kw and clean_kw not in blocked_kw:
+            blocked_kw.append(clean_kw)
+            changed = True
+
+    if changed:
+        return save_blocklist(data)
+    return True
+
+
+def remove_from_blocklist(
+    *,
+    email: str | None = None,
+    ip: str | None = None,
+    keyword: str | None = None,
+) -> bool:
+    """Удалить адрес электронной почты, IP или ключевое слово из блок-листа."""
+    data = _ensure_blocklist_file()
+    changed = False
+
+    if email:
+        clean_email = email.strip().lower()
+        blocked_emails = data.get("blocked_emails", [])
+        if clean_email in blocked_emails:
+            blocked_emails.remove(clean_email)
+            changed = True
+
+    if ip:
+        clean_ip = ip.strip()
+        blocked_ips = data.get("blocked_ips", [])
+        if clean_ip in blocked_ips:
+            blocked_ips.remove(clean_ip)
+            changed = True
+
+    if keyword:
+        clean_kw = keyword.strip().lower()
+        blocked_kw = data.get("blocked_keywords", [])
+        if clean_kw in blocked_kw:
+            blocked_kw.remove(clean_kw)
+            changed = True
+
+    if changed:
+        return save_blocklist(data)
+    return True
+
+
+def is_email_blocked(email: str | None) -> bool:
+    """Проверить, заблокирован ли конкретный email или его домен."""
+    if not email:
+        return False
+    clean_email = email.strip().lower()
+    blocklist = _ensure_blocklist_file()
+    blocked_emails = set(e.lower() for e in blocklist.get("blocked_emails", []))
+    if clean_email in blocked_emails:
+        return True
+    if "@" in clean_email:
+        domain = clean_email.split("@", 1)[1]
+        for b_dom in blocklist.get("blocked_domains", []):
+            if domain == b_dom.lower() or domain.endswith("." + b_dom.lower()):
+                return True
+    return False
+
+
 def check_rate_limit(ip: str, max_requests: int = 4, window_seconds: int = 600) -> bool:
     """Проверка rate limit: не более max_requests запросов за window_seconds."""
     now = time.time()
