@@ -15,7 +15,7 @@ from typing import Any
 from xml.sax.saxutils import escape
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -24,15 +24,17 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from backend.admin_routes import register_admin_routes, router as admin_router
 from backend.captcha_image import normalize_code, random_code, render_png
 from backend.rag_chat import init_rag, router as rag_router
+from backend.seo import get_seo_context
 from backend.spam_protection import check_submission_for_spam
 from cases_data import CASES, CATEGORIES, get_case_by_slug, get_related_cases
 from config import Config
 from db import SessionLocal, get_db, init_db
 from models import ContactMessage, User
 from notifications import notify_contact_submission
-from schemas import ContactFormSchema, LoginFormSchema
+from schemas import ContactFormSchema
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -135,123 +137,6 @@ def _route_name(request: Request) -> str | None:
     return getattr(r, "name", None) if r else None
 
 
-def _seo_context(request: Request) -> dict[str, Any]:
-    site = Config.SITE_URL.rstrip("/")
-    path = request.url.path or "/"
-    if not path.startswith("/"):
-        path = "/" + path
-    canonical = site + path
-    og_img = site + (Config.SEO_OG_IMAGE or "/static/images/hero-profile.jpg")
-    person_ld = {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Сергей Маркин",
-        "jobTitle": "AI-инженер, архитектор автоматизации бизнес-процессов",
-        "description": "AI-инженер и архитектор автоматизации бизнес-процессов. Разработка и внедрение RAG-ассистентов по базам знаний компании, сквозных сценариев n8n, корпоративных чат-ботов в Telegram и AI-продуктов для сокращения рутины.",
-        "url": site + "/",
-        "image": og_img,
-        "email": "sergeymarkin@yandex.ru",
-        "sameAs": ["https://t.me/sergeymarkin"],
-        "knowsAbout": [
-            "Внедрение искусственного интеллекта",
-            "Разработка AI ассистентов для бизнеса",
-            "RAG-системы и корпоративные базы знаний",
-            "Автоматизация бизнес-процессов",
-            "Сценарии n8n и сквозная интеграция",
-            "Чат-боты в Telegram для бизнеса",
-            "Анализ качества звонков Whisper",
-            "Интеграция CRM (amoCRM, Bitrix24)",
-            "Скрининг резюме нейросетью",
-            "Промпт-инжиниринг",
-            "Artificial Intelligence",
-            "AI Agents",
-            "Prompt Engineering",
-            "RAG Systems",
-            "Vector Databases",
-            "FAISS",
-            "n8n Automation",
-            "Telegram Bots",
-            "Python",
-            "FastAPI",
-            "Flutter",
-        ],
-    }
-    service_ld = {
-        "@context": "https://schema.org",
-        "@type": "ProfessionalService",
-        "name": "Сергей Маркин — Внедрение искусственного интеллекта и автоматизация бизнеса",
-        "image": og_img,
-        "url": site + "/",
-        "email": "sergeymarkin@yandex.ru",
-        "priceRange": "$$",
-        "address": {
-            "@type": "PostalAddress",
-            "addressCountry": "RU",
-        },
-        "hasOfferCatalog": {
-            "@type": "OfferCatalog",
-            "name": "Услуги внедрения искусственного интеллекта и автоматизации",
-            "itemListElement": [
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Разработка RAG-ассистентов по корпоративным базам знаний",
-                        "description": "Внедрение умных ботов для ответов по документам, регламентам и инструкциям компании 24/7 без галлюцинаций с переводом на оператора.",
-                    },
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Сквозная автоматизация процессов и интеграция на n8n",
-                        "description": "Интеграция CRM (amoCRM, Bitrix24), мессенджеров, почты и LLM-обработки для отделов продаж и клиентского сервиса.",
-                    },
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Разработка чат-ботов в Telegram с искусственным интеллектом",
-                        "description": "Квалификация лидов, скоринг заявок, автоматическая запись клиентов на консультации.",
-                    },
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Экспресс-аудит бизнес-процессов для внедрения ИИ",
-                        "description": "Анализ рутины компании, поиск точек внедрения нейросетей с максимальным ROI за 24–48 часов. Пилот за 5 дней.",
-                    },
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Автоматический контроль и анализ качества звонков (Whisper + LLM)",
-                        "description": "Распознавание речи звонков отдела продаж, скоринг по чеклистам, выявление возражений и отправка аналитики в CRM.",
-                    },
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Автоматизация первичного отбора и скрининга резюме для HR",
-                        "description": "Мгновенный AI-анализ входящих откликов, скоринг кандидатов по требованиям вакансии и фильтрация нерелевантных резюме.",
-                    },
-                },
-            ],
-        },
-    }
-    return {
-        "site_url": site,
-        "canonical_url": canonical,
-        "seo_og_image": og_img,
-        "seo_person_ld": person_ld,
-        "seo_service_ld": service_ld,
-    }
-
-
 def _flash_list(request: Request) -> list[tuple[str, str]]:
     raw = request.session.pop("flashes", None)
     if not raw:
@@ -281,7 +166,7 @@ def _tpl(
         "url_for": url_for,
         "route_name": _route_name(request),
         "flash_messages": flashes,
-        **_seo_context(request),
+        **get_seo_context(request),
         **kwargs,
     }
     if "chat_api_base" not in ctx:
@@ -349,11 +234,14 @@ def _csrf_check(request: Request, token: str | None) -> bool:
     return bool(token and token == request.session.get("csrf_token"))
 
 
-def _current_user(db: Session, request: Request) -> User | None:
-    uid = request.session.get("user_id")
-    if not uid:
-        return None
-    return db.get(User, int(uid))
+register_admin_routes(
+    admin_router,
+    tpl_renderer=_tpl,
+    csrf_ensure=_csrf_ensure,
+    csrf_check=_csrf_check,
+    add_flash=_add_flash,
+)
+app.include_router(admin_router)
 
 
 @app.get("/", response_class=HTMLResponse, name="index")
@@ -583,170 +471,14 @@ def sitemap_xml(request: Request):
     return Response(content="\n".join(lines), media_type="application/xml; charset=utf-8")
 
 
-@app.get("/admin/login", response_class=HTMLResponse, name="admin_login")
-def admin_login_get(request: Request, db: Session = Depends(get_db)):
-    if _current_user(db, request):
-        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-    return _tpl(
-        request,
-        "admin/login.html",
-        csrf_token=_csrf_ensure(request),
-        field_errors={},
-        seo_noindex=True,
-        seo_title="Вход",
-        meta_desc="Служебный вход в панель управления заявками.",
-        og_title="Вход в админ-панель",
-    )
+@app.get("/yandex_ba5eac75b0bf5a4c.html", response_class=FileResponse, include_in_schema=False)
+def yandex_verification():
+    return FileResponse(BASE_DIR / "public" / "yandex_ba5eac75b0bf5a4c.html")
 
 
-@app.post("/admin/login", response_class=HTMLResponse)
-def admin_login_post(
-    request: Request,
-    db: Session = Depends(get_db),
-    username: str = Form(""),
-    password: str = Form(""),
-    remember: str | None = Form(None),
-    csrf_token: str = Form(""),
-):
-    if not _csrf_check(request, csrf_token):
-        _add_flash(request, "Ошибка сессии.", "danger")
-        return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
-    rem = remember in ("on", "true", "1", "yes")
-    try:
-        LoginFormSchema(username=username, password=password, remember=rem)
-    except ValidationError:
-        return _tpl(
-            request,
-            "admin/login.html",
-            csrf_token=_csrf_ensure(request),
-            field_errors={"login": ["Неверный логин или пароль."]},
-            seo_noindex=True,
-            seo_title="Вход",
-            meta_desc="Служебный вход.",
-            og_title="Вход в админ-панель",
-            status_code=422,
-        )
-
-    u = db.scalars(select(User).where(User.username == username.strip())).first()
-    if u and u.check_password(password):
-        request.session["user_id"] = u.id
-        logger.info("Вход в админку: %s", u.username)
-        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-    logger.warning("Неудачная попытка входа: %s", username)
-    return _tpl(
-        request,
-        "admin/login.html",
-        csrf_token=_csrf_ensure(request),
-        field_errors={"login": ["Неверный логин или пароль."]},
-        seo_noindex=True,
-        seo_title="Вход",
-        meta_desc="Служебный вход.",
-        og_title="Вход в админ-панель",
-        status_code=401,
-    )
-
-
-@app.get("/admin/logout", name="admin_logout")
-def admin_logout(request: Request, db: Session = Depends(get_db)):
-    u = _current_user(db, request)
-    if u:
-        logger.info("Выход из админки: %s", u.username)
-    request.session.pop("user_id", None)
-    _add_flash(request, "Вы вышли из системы.", "info")
-    return RedirectResponse(url=str(request.url_for("index")), status_code=303)
-
-
-@app.get("/admin", response_class=HTMLResponse, name="admin_dashboard")
-def admin_dashboard(request: Request, db: Session = Depends(get_db)):
-    user = _current_user(db, request)
-    if not user:
-        return RedirectResponse(
-            url=str(request.url_for("admin_login")) + "?next=/admin",
-            status_code=303,
-        )
-    messages = db.execute(select(ContactMessage).order_by(ContactMessage.created_at.desc())).scalars().all()
-    return _tpl(
-        request,
-        "admin/dashboard.html",
-        csrf_token=_csrf_ensure(request),
-        messages=messages,
-        current_user=user,
-        seo_noindex=True,
-        seo_title="Заявки",
-        meta_desc="Панель заявок с формы обратной связи.",
-        og_title="Заявки — админ",
-    )
-
-
-def _admin_post_guard(request: Request, db: Session) -> User | None:
-    user = _current_user(db, request)
-    if not user:
-        return None
-    return user
-
-
-@app.post("/admin/message/{message_id}/read", name="admin_message_read")
-def admin_message_read(
-    request: Request,
-    message_id: int,
-    db: Session = Depends(get_db),
-    csrf_token: str = Form(""),
-):
-    if not _admin_post_guard(request, db):
-        return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
-    if not _csrf_check(request, csrf_token):
-        _add_flash(request, "Ошибка CSRF. Повторите действие.", "danger")
-        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-    msg = db.get(ContactMessage, message_id)
-    if msg:
-        msg.is_read = True
-        db.commit()
-        logger.info("Заявка %s отмечена прочитанной", message_id)
-        _add_flash(request, "Заявка отмечена как прочитанная.", "success")
-    else:
-        _add_flash(request, "Заявка не найдена.", "warning")
-    return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-
-
-@app.post("/admin/message/{message_id}/unread", name="admin_message_unread")
-def admin_message_unread(
-    request: Request,
-    message_id: int,
-    db: Session = Depends(get_db),
-    csrf_token: str = Form(""),
-):
-    if not _admin_post_guard(request, db):
-        return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
-    if not _csrf_check(request, csrf_token):
-        _add_flash(request, "Ошибка CSRF.", "danger")
-        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-    msg = db.get(ContactMessage, message_id)
-    if msg:
-        msg.is_read = False
-        db.commit()
-        logger.info("Заявка %s отмечена непрочитанной", message_id)
-    return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-
-
-@app.post("/admin/message/{message_id}/delete", name="admin_message_delete")
-def admin_message_delete(
-    request: Request,
-    message_id: int,
-    db: Session = Depends(get_db),
-    csrf_token: str = Form(""),
-):
-    if not _admin_post_guard(request, db):
-        return RedirectResponse(url=str(request.url_for("admin_login")), status_code=303)
-    if not _csrf_check(request, csrf_token):
-        _add_flash(request, "Ошибка CSRF.", "danger")
-        return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
-    msg = db.get(ContactMessage, message_id)
-    if msg:
-        db.delete(msg)
-        db.commit()
-        logger.info("Заявка %s удалена", message_id)
-        _add_flash(request, "Заявка удалена.", "info")
-    return RedirectResponse(url=str(request.url_for("admin_dashboard")), status_code=303)
+@app.get("/googled538d210272879fb.html", response_class=FileResponse, include_in_schema=False)
+def google_verification():
+    return FileResponse(BASE_DIR / "public" / "googled538d210272879fb.html")
 
 
 @app.exception_handler(HTTPException)

@@ -68,7 +68,7 @@ JSON-LD с типом Person помогает поисковикам понят�
 Домен и картинка по умолчанию задаются в **`config.py`**:
 
 - `SITE_URL` — канонический адрес (по умолчанию `https://sergeymarkin.ru`). В продакшене задайте переменную окружения `SITE_URL`, если домен другой.
-- `SEO_OG_IMAGE` — путь к превью для соцсетей (по умолчанию `/static/images/hero-profile.svg`). Можно заменить на JPG 1200×630 в `static/images/` и прописать путь в переменной `SEO_OG_IMAGE`.
+- `SEO_OG_IMAGE` — путь к превью для соцсетей (по умолчанию `/static/images/hero-profile.jpg`). Можно заменить на JPG 1200×630 в `static/images/` и прописать путь в переменной `SEO_OG_IMAGE`.
 
 Проверка превью: после деплоя вставьте полный URL сайта на [opengraph.xyz](https://www.opengraph.xyz/).
 
