@@ -1,0 +1,13 @@
+Где посмотреть и протестировать живые демо проектов
+---------------------------------------------------
+
+Все решения можно протестировать перед началом сотрудничества:
+- Чат-виджет поддержки на сайте sergeymarkin.ru (RAG по базе знаний + перевод на оператора);
+- Telegram RAG-бот по базе знаний компании: @rag_markin_bot (https://t.me/rag_markin_bot);
+- Telegram-бот записи на консультацию и квалификации лидов: @GPTSergeyHelper_bot (https://t.me/GPTSergeyHelper_bot);
+- Telegram-бот аудита телефонных звонков: @Dialog_analyse_bot (https://t.me/Dialog_analyse_bot);
+- SaaS-платформа прямого доступа к зарубежным нейросетям из РФ с оплатой МИР: https://iiproxy.ru/;
+- Мобильное приложение на Flutter «Агронайзер» в RuStore: https://agronizer.ru/.
+
+Полный список кейсов с описанием архитектуры и результатов доступен на странице: /cases.
+Контакты для обсуждения проекта: Telegram https://t.me/sergeymarkin или email sergeymarkin@yandex.ru.
