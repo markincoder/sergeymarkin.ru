@@ -99,41 +99,58 @@ def main() -> int:
         print(f"[!] Ошибка подключения по SSH: {e}")
         return 1
 
-    # Умный поиск каталога репозитория (подпапка sergeymarkin или текущий docker_dir)
+    repo_url = "https://github.com/markincoder/sergeymarkin.ru.git"
+
     detect_and_deploy_script = f"""
 set -e
 DOCKER_DIR="{docker_dir}"
-SUBDIR="{project_subdir}"
+PROJECT_DIR="$DOCKER_DIR/{project_subdir}"
+REPO_URL="{repo_url}"
 
-if [ -d "$DOCKER_DIR/$SUBDIR/.git" ]; then
-    GIT_DIR="$DOCKER_DIR/$SUBDIR"
-elif [ -d "$DOCKER_DIR/.git" ]; then
-    GIT_DIR="$DOCKER_DIR"
-elif [ -d "$DOCKER_DIR/sergeymarkin.ru/.git" ]; then
-    GIT_DIR="$DOCKER_DIR/sergeymarkin.ru"
+echo "[1/4] Синхронизация репозитория в $PROJECT_DIR..."
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "[*] Клонируем репозиторий..."
+    git clone "$REPO_URL" "$PROJECT_DIR"
+elif [ ! -d "$PROJECT_DIR/.git" ]; then
+    echo "[*] Инициализируем Git..."
+    cd "$PROJECT_DIR"
+    if [ -f .env ]; then
+        cp -a .env /tmp/sergeymarkin_env.backup
+    fi
+    git init
+    git remote add origin "$REPO_URL" || git remote set-url origin "$REPO_URL"
+    git fetch origin
+    git checkout -f -B main origin/main
+    git reset --hard origin/main
+    if [ -f /tmp/sergeymarkin_env.backup ]; then
+        cp -a /tmp/sergeymarkin_env.backup .env
+    fi
 else
-    echo "ОШИБКА: Каталог Git-репозитория не найден в $DOCKER_DIR/$SUBDIR!"
-    exit 1
+    cd "$PROJECT_DIR"
+    git fetch origin
+    git checkout -f main || git checkout -f -B main origin/main
+    git reset --hard origin/main
 fi
 
-echo "[*] Каталог Git-репозитория: $GIT_DIR"
-echo "[*] Каталог Docker Compose: $DOCKER_DIR"
+echo "[✓] Код успешно обновлён до последней версии $(cd "$PROJECT_DIR" && git rev-parse --short HEAD)!"
 
-echo "=== 1. Git pull в $GIT_DIR ==="
-cd "$GIT_DIR"
-git fetch origin
-git status -s
-git pull origin main || git pull
-
-echo "=== 2. Сборка Docker-образа sergeymarkin-web ==="
+echo ""
+echo "[2/4] Сборка Docker-образа sergeymarkin-web..."
 cd "$DOCKER_DIR"
 docker compose build sergeymarkin-web
 
-echo "=== 3. Перезапуск контейнера sergeymarkin-web ==="
+echo ""
+echo "[3/4] Перезапуск контейнера sergeymarkin-web..."
 docker compose up -d sergeymarkin-web
 
-echo "=== 4. Статус контейнера ==="
+echo ""
+echo "[4/4] Проверка статуса контейнера..."
 docker compose ps sergeymarkin-web
+
+echo ""
+echo "[*] Проверка доступности сайта..."
+sleep 2
+curl -sI https://sergeymarkin.ru | head -n 5 || true
 """
 
     try:
