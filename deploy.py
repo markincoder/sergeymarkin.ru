@@ -144,12 +144,24 @@ echo "[3/4] Перезапуск контейнера sergeymarkin-web..."
 docker compose up -d sergeymarkin-web
 
 echo ""
+echo "[*] Синхронизация файлов базы знаний в том базы..."
+docker compose exec -T sergeymarkin-web cp -a /app/_image_rag_data/. /app/database/rag_data/
+
+echo ""
+echo "[*] Пересборка векторного индекса базы знаний (RAG FAISS index)..."
+docker compose exec -T sergeymarkin-web python -m backend.build_index
+
+echo ""
+echo "[*] Перезапуск sergeymarkin-web для загрузки нового индекса..."
+docker compose restart sergeymarkin-web
+
+echo ""
 echo "[4/4] Проверка статуса контейнера..."
 docker compose ps sergeymarkin-web
 
 echo ""
 echo "[*] Проверка доступности сайта..."
-sleep 2
+sleep 3
 curl -sI https://sergeymarkin.ru | head -n 5 || true
 """
 

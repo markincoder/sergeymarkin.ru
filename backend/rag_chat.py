@@ -295,8 +295,7 @@ def _run_rag_answer(q: str, context: str) -> str:
         "Вне тематики — вежливый отказ в 1–2 предложениях; предложи вопрос про услуги или форму «Обратная связь».\n"
         "Не выдумывай цены, сроки и контакты; если во фрагментах нет ответа — скажи об этом и предложи связаться через сайт.\n"
         "Язык: русский, кратко.\n"
-        "Если опираешься на фрагменты — последней строкой точно: Источник: <через запятую значения поля «Источник (файл/раздел)» использованных фрагментов>. "
-        "Без релевантных фрагментов — не добавляй выдуманную строку Источник."
+        "Никогда не добавляй в ответ ссылки на источники, названия файлов или строку вида «Источник: ...»."
     )
     completion = _client.chat.completions.create(
         model="gpt-4o-mini",
@@ -314,27 +313,57 @@ def _run_rag_answer(q: str, context: str) -> str:
         temperature=0.3,
         max_tokens=800,
     )
-    return (completion.choices[0].message.content or "").strip()
+    raw = (completion.choices[0].message.content or "").strip()
+    # Гарантированно вырезаем любые упоминания источников из ответа
+    cleaned = re.sub(r"(?im)^\s*источник[и]?\s*:\s*.*$", "", raw).strip()
+    cleaned = re.sub(r"(?im)\[?источник[и]?\s*:\s*[^\]\n]+\]?", "", cleaned).strip()
+    return cleaned
+
+
+def _is_unsure_answer(answer_text: str, is_weak: bool) -> bool:
+    """Определяет, не уверен ли бот в ответе (для показа кнопки 'Менеджер')."""
+    if is_weak:
+        return True
+    t = (answer_text or "").lower()
+    markers = (
+        "нет точного ответа",
+        "нет информации",
+        "нет данных",
+        "не содержит информации",
+        "не могу ответить",
+        "не уверен",
+        "не знаю",
+        "в базе знаний нет",
+        "в материалах сайта нет",
+        "не содержится в базе",
+        "не найдено в базе",
+        "уточните у",
+        "связаться через сайт",
+        "подключить оператора",
+        "свяжитесь напрямую",
+    )
+    return any(m in t for m in markers)
 
 
 _OFFER_OPERATOR_AFTER_WEAK_RAG = (
-    "В материалах сайта и базе знаний нет уверенного ответа на ваш вопрос. "
-    "Подключить оператора? Ответьте «да» или «нет»."
+    "В материалах сайта и базе знаний нет точного ответа на ваш вопрос. "
+    "Вы можете отправить сообщение напрямую Сергею — нажмите кнопку «Менеджер» ниже или напишите «да»."
 )
 _HANDOFF_OFFER_DECLINED = (
     "Хорошо. Можете задать другой вопрос по тематике сайта или переформулировать запрос."
 )
 _OPERATOR_HANDOFF_AFTER_CONFIRM = (
-    "Передал вопрос оператору. Ответ появится здесь; при необходимости уточните детали в этом окне."
+    "Передал вопрос Сергею. Ответ появится здесь; при необходимости уточните детали в этом окне."
 )
 _OPERATOR_HANDOFF_EXPLICIT_MSG = (
-    "По вашей просьбе передал диалог оператору. Ответ появится здесь; при необходимости допишите детали в этом окне."
+    "Диалог переведён на Сергея. Напишите ваш вопрос в этом окне — сообщение сразу уйдёт напрямую в Telegram. "
+    "Также вы можете написать лично в Telegram: @sergeymarkin."
 )
 _OPERATOR_ACK = "Сообщение передано оператору."
 # Явная просьба о человеке, но Telegram не вышел (нет env / ошибка API).
 _EXPLICIT_HANDOFF_UNAVAILABLE = (
-    "Оператор сейчас недоступен (Telegram не настроен или не удалось отправить уведомление). "
-    "Напишите через форму «Обратная связь» на сайте или повторите запрос позже."
+    "Вы можете отправить сообщение напрямую Сергею в Telegram: @sergeymarkin (https://t.me/sergeymarkin) "
+    "или на почту sergeymarkin@yandex.ru, либо заполнить форму «Обратная связь» на сайте."
 )
 _ALREADY_WITH_OPERATOR = (
     "Диалог уже у оператора — напишите ваш вопрос в этом окне, ответ появится здесь."
@@ -501,10 +530,12 @@ def chat_post(body: ChatRequest) -> dict[str, Any]:
                         "answer": _OFFER_OPERATOR_AFTER_WEAK_RAG,
                         "session_id": sid,
                         "operator_active": False,
+                        "show_manager_button": True,
                     })
 
             context = _hits_to_labeled_context(hits)
             answer = _run_rag_answer(q, context)
+            show_mgr = _is_unsure_answer(answer, weak)
         except PermissionDeniedError as e:
             logger.warning("OpenAI permission: %s", e)
             raise HTTPException(
@@ -516,7 +547,12 @@ def chat_post(body: ChatRequest) -> dict[str, Any]:
             raise HTTPException(status_code=502, detail=str(e.message or str(e))) from e
 
         add_line(db, sid, "assistant", answer)
-        return _with_notice({"answer": answer, "session_id": sid, "operator_active": False})
+        return _with_notice({
+            "answer": answer,
+            "session_id": sid,
+            "operator_active": False,
+            "show_manager_button": show_mgr,
+        })
     finally:
         db.close()
 

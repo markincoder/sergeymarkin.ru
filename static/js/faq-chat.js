@@ -136,6 +136,38 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  function appendManagerActions() {
+    const existing = document.getElementById("chat-manager-actions");
+    if (existing) existing.remove();
+
+    const actionsDiv = document.createElement("div");
+    actionsDiv.className = "chat-actions-container";
+    actionsDiv.id = "chat-manager-actions";
+
+    const mgrBtn = document.createElement("button");
+    mgrBtn.type = "button";
+    mgrBtn.className = "chat-action-btn chat-btn-manager";
+    mgrBtn.innerHTML = "<span>💬</span> Менеджер";
+    mgrBtn.title = "Передать вопрос Сергею";
+    mgrBtn.addEventListener("click", function () {
+      actionsDiv.remove();
+      inputEl.value = "Менеджер";
+      sendMessage();
+    });
+
+    const tgLink = document.createElement("a");
+    tgLink.href = "https://t.me/sergeymarkin";
+    tgLink.target = "_blank";
+    tgLink.rel = "noopener";
+    tgLink.className = "chat-action-btn chat-btn-tg";
+    tgLink.innerHTML = "<span>✈️</span> Telegram @sergeymarkin";
+
+    actionsDiv.appendChild(mgrBtn);
+    actionsDiv.appendChild(tgLink);
+    messagesEl.appendChild(actionsDiv);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
   function appendTyping() {
     const div = document.createElement("div");
     div.className = "chat-message bot";
@@ -202,6 +234,9 @@
       const answer = (data && data.answer) || "";
       if (answer) {
         appendMessage(answer, "bot");
+        if (data.show_manager_button || answer.indexOf("Менеджер") !== -1 || answer.indexOf("нет точного ответа") !== -1) {
+          appendManagerActions();
+        }
       } else if (!vn) {
         appendMessage("(Пустой ответ.)", "bot");
       }
@@ -229,7 +264,7 @@
     launcher.style.display = "none";
     if (!messagesEl.hasChildNodes()) {
       appendMessage(
-        "Привет! Я FAQ-ассистент по материалам этого сайта. Задайте вопрос об услугах, кейсах или работе с ИИ и автоматизацией — отвечу кратко. Если в базе нет ответа по теме, подключу оператора; явно попросить человека можно фразой вроде «переведи на оператора».",
+        "Привет! Я FAQ-ассистент по материалам этого сайта. Задайте вопрос об услугах, кейсах или стоимости внедрения ИИ. Если потребуется помощь человека — нажмите кнопку «Менеджер» или напишите в чат.",
         "bot"
       );
     }

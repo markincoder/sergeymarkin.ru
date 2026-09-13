@@ -150,9 +150,8 @@ def _seo_context(request: Request) -> dict[str, Any]:
         "description": "AI-инженер и архитектор автоматизации бизнес-процессов. Разработка и внедрение RAG-ассистентов по базам знаний компании, сквозных сценариев n8n, корпоративных чат-ботов в Telegram и AI-продуктов для сокращения рутины.",
         "url": site + "/",
         "image": og_img,
-        "email": "markincoder@gmail.com",
-        "telephone": "+7-951-743-16-09",
-        "sameAs": ["https://t.me/markin_coder"],
+        "email": "sergeymarkin@yandex.ru",
+        "sameAs": ["https://t.me/sergeymarkin"],
         "knowsAbout": [
             "Внедрение искусственного интеллекта",
             "Разработка AI ассистентов для бизнеса",
@@ -183,8 +182,7 @@ def _seo_context(request: Request) -> dict[str, Any]:
         "name": "Сергей Маркин — Внедрение искусственного интеллекта и автоматизация бизнеса",
         "image": og_img,
         "url": site + "/",
-        "telephone": "+7-951-743-16-09",
-        "email": "markincoder@gmail.com",
+        "email": "sergeymarkin@yandex.ru",
         "priceRange": "$$",
         "address": {
             "@type": "PostalAddress",
@@ -332,7 +330,7 @@ def _contact_page(
         seo_title="Заявка на AI-аудит и контакты",
         meta_desc=(
             "Заказать внедрение искусственного интеллекта, разработку RAG-бота или аудит бизнес-процессов за 24–48 часов. "
-            "Свяжитесь напрямую в Telegram @markin_coder или отправьте заявку на пилот за 5 дней."
+            "Свяжитесь напрямую в Telegram @sergeymarkin или отправьте заявку на пилот за 5 дней."
         ),
         og_title="Заказать разработку AI-ассистента или аудит процессов — Сергей Маркин",
         status_code=status_code,
