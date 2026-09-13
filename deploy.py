@@ -58,7 +58,8 @@ def main() -> int:
     port = int(cfg.get("SERVER_PORT", "22"))
     key_path = cfg.get("SERVER_KEY_PATH")
     password = cfg.get("SERVER_PASSWORD")
-    remote_dir = cfg.get("REMOTE_DIR", "/home/sergeymarkin/docker")
+    docker_dir = cfg.get("REMOTE_DOCKER_DIR") or cfg.get("REMOTE_DIR", "/home/sergeymarkin/docker")
+    project_subdir = cfg.get("REMOTE_PROJECT_SUBDIR", "sergeymarkin")
 
     if not host or host == "your.server.ip":
         print("ОШИБКА: Укажите корректный SERVER_HOST в deploy_secrets.env")
@@ -98,35 +99,71 @@ def main() -> int:
         print(f"[!] Ошибка подключения по SSH: {e}")
         return 1
 
-    commands = [
-        f"cd {remote_dir} && git status -s",
-        f"cd {remote_dir} && git pull",
-        f"cd {remote_dir} && docker compose build sergeymarkin-web",
-        f"cd {remote_dir} && docker compose up -d sergeymarkin-web",
-        f"cd {remote_dir} && docker compose ps sergeymarkin-web",
-    ]
+    # Умный поиск каталога репозитория (подпапка sergeymarkin или текущий docker_dir)
+    detect_and_deploy_script = f"""
+set -e
+DOCKER_DIR="{docker_dir}"
+SUBDIR="{project_subdir}"
+
+if [ -d "$DOCKER_DIR/$SUBDIR/.git" ]; then
+    GIT_DIR="$DOCKER_DIR/$SUBDIR"
+elif [ -d "$DOCKER_DIR/.git" ]; then
+    GIT_DIR="$DOCKER_DIR"
+elif [ -d "$DOCKER_DIR/sergeymarkin.ru/.git" ]; then
+    GIT_DIR="$DOCKER_DIR/sergeymarkin.ru"
+else
+    echo "ОШИБКА: Каталог Git-репозитория не найден в $DOCKER_DIR/$SUBDIR!"
+    exit 1
+fi
+
+echo "[*] Каталог Git-репозитория: $GIT_DIR"
+echo "[*] Каталог Docker Compose: $DOCKER_DIR"
+
+echo "=== 1. Git pull в $GIT_DIR ==="
+cd "$GIT_DIR"
+git fetch origin
+git status -s
+git pull origin main || git pull
+
+echo "=== 2. Сборка Docker-образа sergeymarkin-web ==="
+cd "$DOCKER_DIR"
+docker compose build sergeymarkin-web
+
+echo "=== 3. Перезапуск контейнера sergeymarkin-web ==="
+docker compose up -d sergeymarkin-web
+
+echo "=== 4. Статус контейнера ==="
+docker compose ps sergeymarkin-web
+"""
 
     try:
-        for cmd in commands:
-            print(f"\n[>] Выполнение: {cmd}")
-            stdin, stdout, stderr = client.exec_command(cmd)
-            out = stdout.read().decode("utf-8", errors="replace")
-            err = stderr.read().decode("utf-8", errors="replace")
-            if out.strip():
-                print(out.strip())
-            if err.strip():
-                print(err.strip())
-            exit_code = stdout.channel.recv_exit_status()
-            if exit_code != 0:
-                print(f"[!] Команда завершилась с кодом ошибки {exit_code}")
-                # Если git pull не удался или docker compose упал
-                if "git pull" in cmd or "docker compose up" in cmd:
-                    print("[!] Деплой прерван из-за ошибки.")
-                    return exit_code
+        print(f"\n[>] Запуск процедуры деплоя на сервере...")
+        stdin, stdout, stderr = client.exec_command(detect_and_deploy_script)
+        
+        while not stdout.channel.exit_status_ready():
+            if stdout.channel.recv_ready():
+                chunk = stdout.channel.recv(4096).decode("utf-8", errors="replace")
+                print(chunk, end="", flush=True)
+            if stderr.channel.recv_stderr_ready():
+                chunk_err = stderr.channel.recv_stderr(4096).decode("utf-8", errors="replace")
+                print(chunk_err, end="", flush=True)
+
+        # Вычитать остатки
+        remaining_out = stdout.read().decode("utf-8", errors="replace")
+        if remaining_out:
+            print(remaining_out, end="", flush=True)
+        remaining_err = stderr.read().decode("utf-8", errors="replace")
+        if remaining_err:
+            print(remaining_err, end="", flush=True)
+
+        exit_code = stdout.channel.recv_exit_status()
+        if exit_code != 0:
+            print(f"\n[!] Деплой прерван из-за ошибки (код {exit_code})")
+            return exit_code
 
         print("\n" + "=" * 60)
         print("[✓] ДЕПЛОЙ УСПЕШНО ЗАВЕРШЁН!")
-        print("Контейнер sergeymarkin-web пересобран и запущен.")
+        print("Контейнер sergeymarkin-web пересобран и перезапущен.")
         print("=" * 60)
         return 0
     finally:

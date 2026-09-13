@@ -24,6 +24,18 @@ services:
     networks:
       - web
 
+# ================= Kuma =================
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+
+    ports:
+      - "3001:3001"
+
+    volumes:
+      - ./uptime-kuma:/app/data
+
 # ================= Langflow =================
   langflow:
     image: langflowai/langflow:latest
@@ -82,8 +94,8 @@ services:
       - web
 
   # ================= Sergeymarkin =================
-  # По умолчанию: compose в ~/docker/, код и .env в ~/docker/sergeymarkin/
-  # Если весь репозиторий в одной папке с compose — в .env: SERGEYMARKIN_APP_DIR=.
+  # По умолчанию: compose в ~/docker, код и .env в ~/docker/sergeymarkin/ (отдельный .env у родителя не нужен).
+  # Клон репозитория в один каталог (Dockerfile рядом с compose): в корневом .env задайте SERGEYMARKIN_APP_DIR=.
   sergeymarkin-web:
     build:
       context: ${SERGEYMARKIN_APP_DIR:-./sergeymarkin}
@@ -96,7 +108,7 @@ services:
     environment:
       SITE_URL: https://sergeymarkin.ru
     volumes:
-      # SQLite и RAG — в томе database/ (app.db и database/rag_data на хосте).
+      # SQLite в database/; RAG — в backend/rag_data/ в образе (не под томом).
       - sergeymarkin_database:/app/database
     labels:
       - "traefik.enable=true"
@@ -108,42 +120,95 @@ services:
     networks:
       - web
 
-  # ================= WordPress =================
-  wordpress-db:
-    image: mysql:8
-    container_name: wordpress-db
+  # ================= II Proxy (iiproxy) =================
+  # Traefik заводится на nginx (edge): он проксирует в FastAPI и отдаёт HTML-заглушку при 502–504 и недоступном контейнере приложения (errors middleware этого не делает при connection refused).
+  iiproxy-edge:
+    image: nginx:alpine
+    container_name: iiproxy-edge
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
-      MYSQL_USER: ${WORDPRESS_DB_USER}
-      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-    ports:
-      - "3306:3306" # ???????????? ???? ?? ????-??????
     volumes:
-      - wordpress-db-data:/var/lib/mysql
+      - ${IIPROXY_APP_DIR:-./iiproxy.ru}/nginx/iiproxy-edge.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${IIPROXY_APP_DIR:-./iiproxy.ru}/nginx/maintenance-html:/usr/share/nginx/maintenance:ro
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.iiproxy.rule=Host(`iiproxy.ru`) || Host(`www.iiproxy.ru`) || Host(`ii-proxy.ru`) || Host(`www.ii-proxy.ru`)"
+      - "traefik.http.routers.iiproxy.entrypoints=websecure"
+      - "traefik.http.routers.iiproxy.tls=true"
+      - "traefik.http.routers.iiproxy.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.iiproxy.tls.domains[0].main=iiproxy.ru"
+      - "traefik.http.routers.iiproxy.tls.domains[0].sans=www.iiproxy.ru,ii-proxy.ru,www.ii-proxy.ru"
+      - "traefik.http.routers.iiproxy.service=iiproxy-public"
+      - "traefik.http.services.iiproxy-public.loadbalancer.server.port=80"
+
+  # По умолчанию: compose в ~/docker, проект в ~/docker/iiproxy.ru/ (Dockerfile и .env внутри). Иначе: IIPROXY_APP_DIR= в .env рядом с compose.
+  iiproxy-web:
+    build:
+      context: ${IIPROXY_APP_DIR:-./iiproxy.ru}
+      dockerfile: Dockerfile
+    image: iiproxy-web:local
+    container_name: iiproxy-web
+    restart: unless-stopped
+    env_file:
+      - ${IIPROXY_APP_DIR:-./iiproxy.ru}/.env
+    environment:
+      # DATABASE_URL — только в .env проекта на сервере (не держите пароль здесь и в Git).
+      # В URL спецсимволы пароля кодируйте: например ! → %21 → ... "mysql+pymysql://user:p%21123@..."
+      NEXT_PUBLIC_APP_URL: https://iiproxy.ru
+    volumes:
+      - iiproxy_database:/app/data
     networks:
       - web
 
-  wordpress-shop:
-    image: wordpress:latest
-    container_name: wordpress-shop
+  # ================= Agronizer (FastAPI / uvicorn :3000) =================
+  # Портал + PWA/APK + Web Push + OAuth (Яндекс/VK).
+  # docker-compose.yml лежит ВНЕ проекта (общий стек).
+  # Каталог проекта рядом с compose: ./agronizer/
+  # Сборка артефактов на ПК: cd agronizer; .\scripts\build_all.ps1
+  # После смены Python-кода: docker compose build agronizer && docker compose up -d agronizer
+  # VAPID/подписки — том agronizer_data. Коды доступа — DATABASE_URL (MySQL на проде).
+  agronizer:
+    build:
+      context: ./agronizer/platform/push
+      dockerfile: Dockerfile
+    image: agronizer:local
+    container_name: agronizer
     restart: unless-stopped
-    depends_on:
-      - wordpress-db
+    env_file:
+      - ./agronizer/platform/push/.env
     environment:
-      WORDPRESS_DB_HOST: wordpress-db:3306
-      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      # Пути и публичный URL всегда контейнерные/продовые — не из локального .env
+      - PORT=3000
+      - DATA_DIR=/data
+      - STATIC_DIR=/var/www
+      - SITE_URL=https://agronizer.ru
+      - YOOKASSA_RETURN_URL=https://agronizer.ru/
+      - YANDEX_OAUTH_REDIRECT_URI=https://agronizer.ru/api/auth/oauth/yandex/callback
+      - VK_OAUTH_REDIRECT_URI=https://agronizer.ru/api/auth/oauth/vk/callback
+      - VAPID_SUBJECT=mailto:support@agronizer.ru
+      - DEFAULT_APP_URL=/apps/microgreens/
+      # OAuth, YooKassa, SESSION_SECRET — из env_file
+      # - PUSH_API_KEY=change-me
     volumes:
-      - ./shop:/var/www/html
+      - ./agronizer/site:/var/www:ro
+      # Именованный том /data: access.sqlite, vapid.json, subscriptions.json, schedules.json.
+      # Если раньше был bind ./agronizer/platform/push/data — один раз скопируйте в том, иначе старт с пустой БД:
+      #   docker compose stop agronizer
+      #   docker run --rm -v "$PWD/agronizer/platform/push/data:/from:ro" -v agronizer_data:/to alpine cp -a /from/. /to/
+      #   docker compose up -d agronizer
+      - agronizer_data:/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wordpress-shop.rule=Host(`shop.sergeymarkin.ru`) || Host(`www.shop.sergeymarkin.ru`)"
-      - "traefik.http.routers.wordpress-shop.entrypoints=websecure"
-      - "traefik.http.routers.wordpress-shop.tls=true"
-      - "traefik.http.routers.wordpress-shop.tls.certresolver=mytlschallenge"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.agronizer.rule=Host(`agronizer.ru`) || Host(`www.agronizer.ru`)"
+      - "traefik.http.routers.agronizer.entrypoints=websecure"
+      - "traefik.http.routers.agronizer.tls=true"
+      - "traefik.http.routers.agronizer.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.agronizer.tls.domains[0].main=agronizer.ru"
+      - "traefik.http.routers.agronizer.tls.domains[0].sans=www.agronizer.ru"
+      - "traefik.http.services.agronizer.loadbalancer.server.port=3000"
     networks:
       - web
 
@@ -164,6 +229,56 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.routers.portainer.tls.certresolver=mytlschallenge"
+    networks:
+      - web
+  
+  # ================= Incoming Lids (Telegram support bot) =================
+  # По умолчанию: compose в корне репо, код и .env в ./incoming_lids/.
+  # Иначе: INCOMING_LIDS_APP_DIR= в .env рядом с compose.
+  incoming-lids:
+    build:
+      context: ${INCOMING_LIDS_APP_DIR:-./incoming_lids}
+      dockerfile: Dockerfile
+    image: incoming-lids:local
+    container_name: incoming-lids
+    restart: unless-stopped
+    env_file:
+      - ${INCOMING_LIDS_APP_DIR:-./incoming_lids}/.env
+    networks:
+      - web
+
+  # ================= Onboarding (Telegram training bot) =================
+  # По умолчанию: compose на уровень выше, код и .env в ./onboard/.
+  # Иначе: ONBOARDING_APP_DIR= в .env рядом с compose.
+  onboard:
+    build:
+      context: ${ONBOARDING_APP_DIR:-./onboard}
+      dockerfile: Dockerfile
+    image: onboarding:local
+    container_name: onboard
+    restart: unless-stopped
+    env_file:
+      - ${ONBOARDING_APP_DIR:-./onboard}/.env
+    networks:
+      - web
+
+  # ================= Data Assistant (FastAPI / uvicorn :8000) =================
+  # По умолчанию: compose на уровень выше, код и .env в ./data_assistant/.
+  # Иначе: DATA_ASSISTANT_APP_DIR= в .env рядом с compose.
+  data-assistant:
+    build:
+      context: ${DATA_ASSISTANT_APP_DIR:-./data_assistant}
+      dockerfile: Dockerfile
+    image: data-assistant:local
+    container_name: data-assistant
+    restart: unless-stopped
+    env_file:
+      - ${DATA_ASSISTANT_APP_DIR:-./data_assistant}/.env
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - ${DATA_ASSISTANT_APP_DIR:-./data_assistant}/storage/uploads:/app/storage/uploads
+      - ${DATA_ASSISTANT_APP_DIR:-./data_assistant}/storage/outputs:/app/storage/outputs
     networks:
       - web
 
@@ -188,11 +303,147 @@ services:
     networks:
       - web
 
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: Sermar123!
+      WORDPRESS_DB_NAME: wordpress_db
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://82.40.60.219:8080');
+        define('WP_SITEURL', 'http://82.40.60.219:8080');
+    volumes:
+      - /home/sergeymarkin/www/shop:/var/www/html
+    depends_on:
+      - wordpress-db
+    networks:
+      - web
+
+  wordpress-db:
+    image: mysql:8
+    container_name: wordpress-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Sermar123!
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Sermar123!
+    ports:
+      - "3306:3306"
+    volumes:
+      - wordpress-db-data:/var/lib/mysql
+    networks:
+      - web
+
+  # ================= Shared Postgres (multi-project) =================
+  # Учётка сервера БД — в корневом .env (POSTGRES_USER / POSTGRES_PASSWORD).
+  # Строка подключения приложения — в .env каждого сервиса (DATABASE_URL и т.п.).
+  # Том: feedback_assistant_postgres — чтобы не потерять уже существующие данные.
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - web
+
+  # ================= Feedback Assistant (reviews web + AI worker) =================
+  # По умолчанию: compose на уровень выше, код и .env в ./feedback_assistant/.
+  # Иначе: FEEDBACK_ASSISTANT_DIR= в .env рядом с compose.
+  # Приложение: ./feedback_assistant/app_test_2803  (DATABASE_URL, APP_*, WORKER_API_TOKEN)
+  # Worker:     ./feedback_assistant/worker_ai      (к БД не подключается)
+  reviews-web:
+    build:
+      context: ${FEEDBACK_ASSISTANT_DIR:-./feedback_assistant}/app_test_2803
+      dockerfile: Dockerfile
+    container_name: reviews-web
+    restart: unless-stopped
+    env_file:
+      - ${FEEDBACK_ASSISTANT_DIR:-./feedback_assistant}/app_test_2803/.env
+    environment:
+      APP_PORT: "8001"
+    ports:
+      - "${FEEDBACK_APP_PORT:-8001}:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('APP_PORT','8001'))\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - web
+
+  reviews-worker:
+    build:
+      context: ${FEEDBACK_ASSISTANT_DIR:-./feedback_assistant}/worker_ai
+      dockerfile: Dockerfile
+    container_name: reviews-worker
+    restart: unless-stopped
+    env_file:
+      - ${FEEDBACK_ASSISTANT_DIR:-./feedback_assistant}/worker_ai/.env
+    environment:
+      TARGET_SITE_URL: http://reviews-web:8001
+    volumes:
+      - ${FEEDBACK_ASSISTANT_DIR:-./feedback_assistant}/worker_ai/data:/service/data
+    depends_on:
+      reviews-web:
+        condition: service_healthy
+    networks:
+      - web
+
+  # ================= STT Analyse (Telegram video/mp3 audit bot) =================
+  # Полный DATABASE_URL — в stt_analyse/.env
+  stt-analyse:
+    build:
+      context: ${STT_ANALYSE_APP_DIR:-./stt_analyse}
+      dockerfile: Dockerfile
+    image: stt-analyse:local
+    container_name: stt-analyse
+    restart: unless-stopped
+    env_file:
+      - ${STT_ANALYSE_APP_DIR:-./stt_analyse}/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - web
+
 networks:
   web:
     external: true
 
 volumes:
-  wordpress-db-data:
+  agronizer_data:
+    name: agronizer_data
   sergeymarkin_database:
     name: sergeymarkin_database
+  iiproxy_database:
+    name: iiproxy_database
+  wordpress-db-data:
+    external: true
+    name: docker_wordpress-db-data
+  # Общий Postgres; name оставлен прежним, чтобы не потерять данные feedback_assistant.
+  postgres_data:
+    name: feedback_assistant_postgres
