@@ -78,6 +78,10 @@ body {
   color: var(--accent-light) !important;
 }
 
+.text-accent-cyan {
+  color: var(--accent-cyan) !important;
+}
+
 /* =========================================================
    Навигация
    ========================================================= */
@@ -654,6 +658,70 @@ body {
 
 .case-detail-body p {
   margin-bottom: 1.25rem;
+}
+
+.case-story-block {
+  margin-bottom: 1.7rem;
+}
+
+.case-story-block h2 {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-bottom: 0.55rem;
+  font-weight: 700;
+}
+
+.case-metrics-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.case-metric-row {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.9rem;
+  background: rgba(8, 12, 22, 0.55);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+}
+
+.case-metric-value {
+  flex: 0 0 6.2rem;
+  font-weight: 800;
+  color: #fff;
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.case-metric-label {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.case-next-box {
+  border-left: 3px solid var(--accent-cyan);
+  padding: 0.85rem 1rem;
+  background: rgba(56, 189, 248, 0.06);
+  border-radius: 0 10px 10px 0;
+}
+
+@media (max-width: 576px) {
+  .case-metric-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .case-metric-value {
+    flex: none;
+  }
 }
 
 .case-detail-body a {

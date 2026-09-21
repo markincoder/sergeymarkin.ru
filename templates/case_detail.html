@@ -38,6 +38,20 @@
           <span class="badge bg-primary text-white">{{ case.category_name | default('AI Решение') }}</span>
         </div>
 
+        {% if case.project_type %}
+        <div class="mb-3">
+          <span class="small text-muted d-block mb-1">Тип проекта</span>
+          <strong class="text-white small d-block">{{ case.project_type }}</strong>
+        </div>
+        {% endif %}
+
+        {% if case.budget %}
+        <div class="mb-3">
+          <span class="small text-muted d-block mb-1">Бюджет</span>
+          <strong class="text-white small d-block">{{ case.budget }}</strong>
+        </div>
+        {% endif %}
+
         <div class="mb-3">
           <span class="small text-muted d-block mb-1">Стек и технологии:</span>
           <strong class="text-white small d-block">{{ case.stack }}</strong>
@@ -74,7 +88,7 @@
 
     </div>
 
-    <!-- Right Column: Case Story (STAR Format) -->
+    <!-- Right Column: единый каркас кейса -->
     <div class="col-lg-7">
       <span class="case-category-pill">{{ case.category_name | default('Кейс') }}</span>
       <h1 class="h2 fw-bold text-gradient mb-3">{{ case.title }}</h1>
@@ -82,7 +96,41 @@
 
       <div class="card-glass p-4 p-md-5 mb-4">
         <div class="case-detail-body">
+          {% if case.task %}
+          <section class="case-story-block">
+            <h2>Задача</h2>
+            <p>{{ case.task }}</p>
+          </section>
+          <section class="case-story-block">
+            <h2>Что сделали</h2>
+            <p>{{ case.solution | safe }}</p>
+          </section>
+          {% if case.metrics %}
+          <section class="case-story-block">
+            <h2>Результат</h2>
+            <ul class="case-metrics-list">
+              {% for m in case.metrics %}
+              <li class="case-metric-row">
+                <span class="case-metric-value">{{ m.value }}</span>
+                <span class="case-metric-label">{{ m.label }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </section>
+          {% endif %}
+          <section class="case-story-block">
+            <h2>Инструменты</h2>
+            <p class="mb-0">{{ case.stack }}{% if case.tags %} · {{ case.tags | join(', ') }}{% endif %}</p>
+          </section>
+          {% if case.next_step %}
+          <section class="case-story-block mb-0">
+            <h2>Следующий этап</h2>
+            <p class="case-next-box mb-0">{{ case.next_step }}</p>
+          </section>
+          {% endif %}
+          {% else %}
           {{ case.detail | safe }}
+          {% endif %}
         </div>
       </div>
 

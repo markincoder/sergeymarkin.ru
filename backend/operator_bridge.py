@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import uuid
+from datetime import datetime
 from typing import Any, Callable, Mapping
 
 from sqlalchemy import delete, func, select
@@ -37,7 +38,7 @@ _UUID_ONLY_LINE = re.compile(
 )
 # «session: uuid остальной текст» в одной строке.
 _LINE_LEADING_SESSION = re.compile(
-    r"(?i)^\s*(?:session|сессия)\s*[:=]\s*[0-9a-f]{8}(?:-[0-9a-f]{4}){4}-[0-9a-f]{12}\b\s+(\S.*)$"
+    r"(?i)^\s*(?:session|сессия)\s*[:=]\s*[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b\s+(\S.*)$"
 )
 
 # Явная просьба перевести на человека (подстрока, lower).
@@ -137,14 +138,15 @@ def close_session_by_operator(db: Session, session_id: str, visitor_notice: str)
 
 
 def release_operator_line_to_rag(db: Session, session_id: str) -> None:
-    """Вернуть чат в режим FAQ без уведомления (например короткое «добрый день» при залипшей operator-сессии)."""
+    """Вернуть чат в режим FAQ без уведомления (например короткое «добрый день» при залипшей operator-сессии).
+
+    Карту Telegram и якорь не трогаем: иначе Reply оператора на сообщение бота уже не найдёт сессию.
+    """
     sess = db.get(ChatBridgeSession, session_id)
     if sess is None:
         return
     sess.mode = "rag"
-    sess.telegram_anchor_id = None
     sess.handoff_confirm_pending = False
-    db.execute(delete(TelegramBridgeMap).where(TelegramBridgeMap.session_id == session_id))
     db.add(sess)
     db.commit()
 
@@ -199,6 +201,11 @@ def append_operator_message(db: Session, session_id: str, text: str) -> tuple[in
     ) + 1
     line = ChatBridgeLine(session_id=session_id, role="operator", content=clean, op_seq=next_seq)
     db.add(line)
+    sess = db.get(ChatBridgeSession, session_id)
+    if sess is not None:
+        sess.mode = "operator"
+        sess.updated_at = datetime.utcnow()
+        db.add(sess)
     db.commit()
     db.refresh(line)
     return line.id, next_seq
@@ -262,22 +269,44 @@ def register_reply_branch_for_session(db: Session, telegram_message: dict[str, A
 
 
 def resolve_session_from_plain_text(db: Session, text: str) -> str | None:
-    """Найти session_id в свободном тексте (ответ оператора без Reply). Только сессии в режиме operator."""
+    """Найти session_id в тексте (Reply без карты, вставка session: uuid). Предпочитаем режим operator."""
     t = (text or "").strip()
     if not t:
         return None
+    found: list[str] = []
     m = _SESSION_TOKEN.search(t)
     if m:
-        sid = m.group(1).strip()
-        row = db.get(ChatBridgeSession, sid)
-        if row and row.mode == "operator":
-            return sid
+        found.append(m.group(1).strip())
     for um in _ANY_UUID.finditer(t):
         sid = um.group(1)
+        if sid not in found:
+            found.append(sid)
+    operator_sid: str | None = None
+    any_sid: str | None = None
+    for sid in found:
         row = db.get(ChatBridgeSession, sid)
-        if row and row.mode == "operator":
-            return sid
-    return None
+        if not row:
+            continue
+        if row.mode == "operator":
+            operator_sid = sid
+            break
+        if any_sid is None:
+            any_sid = sid
+    return operator_sid or any_sid
+
+
+def find_latest_open_handoff_session(db: Session) -> str | None:
+    """Последняя открытая линия с оператором (режим operator или ещё живой якорь Telegram)."""
+    row = db.scalar(
+        select(ChatBridgeSession)
+        .where(
+            (ChatBridgeSession.mode == "operator")
+            | (ChatBridgeSession.telegram_anchor_id.is_not(None))
+        )
+        .order_by(ChatBridgeSession.updated_at.desc())
+        .limit(1)
+    )
+    return row.session_id if row else None
 
 
 def resolve_session_from_reply_chain(db: Session, reply_to: dict[str, Any] | None) -> str | None:
@@ -295,6 +324,43 @@ def resolve_session_from_reply_chain(db: Session, reply_to: dict[str, Any] | Non
                 return sid
         nxt = cur.get("reply_to_message")
         cur = nxt if isinstance(nxt, dict) else None
+    return None
+
+
+def resolve_operator_session_from_telegram_message(
+    db: Session,
+    msg: dict[str, Any],
+    *,
+    configured_thread_id: str = "",
+    allow_chat_fallback: bool = False,
+) -> str | None:
+    """Определить сессию чата сайта по апдейту Telegram (Reply, цитата, session: uuid, единственная линия)."""
+    reply_to = msg.get("reply_to_message")
+    reply_dict = reply_to if isinstance(reply_to, dict) else None
+    sid = resolve_session_from_reply_chain(db, reply_dict)
+    if sid:
+        return sid
+    quote = msg.get("quote")
+    if isinstance(quote, dict):
+        sid = resolve_session_from_plain_text(db, quote.get("text") or "")
+        if sid:
+            return sid
+    sid = resolve_session_from_plain_text(db, (msg.get("text") or msg.get("caption") or ""))
+    if sid:
+        return sid
+    # В рабочем чате менеджера Reply часто указывает на тему форума, а не на сообщение бота.
+    # Берём последнюю открытую линию — иначе клиент не увидит ответ.
+    latest = find_latest_open_handoff_session(db)
+    if latest and (reply_dict is not None or allow_chat_fallback):
+        logger.info(
+            "Telegram: Reply без карты message_id — привязали к последней открытой сессии %s",
+            latest,
+        )
+        return latest
+    thread_id = msg.get("message_thread_id")
+    cfg_thread = (configured_thread_id or "").strip()
+    if latest and cfg_thread and thread_id is not None and str(thread_id) == cfg_thread:
+        return latest
     return None
 
 

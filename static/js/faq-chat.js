@@ -117,11 +117,8 @@
           }
         }
         if (maxSeq > after) setLastOpSeq(maxSeq);
-        // Явный false останавливает poll; не требуем operator_active === true, чтобы показать messages
-        // (иначе отличное от boolean true из-за прокси/кэша глотало ответы оператора).
-        if (data.operator_active === false) {
-          stopPolling();
-        }
+        // Poll не глушим при operator_active=false: оператор может ответить после
+        // сброса чата в FAQ, и реплика должна появиться без перезагрузки страницы.
       })
       .catch(function () {
         pollInFlight = false;
@@ -278,8 +275,13 @@
     closeBtn.addEventListener("click", function () {
       widget.style.display = "none";
       launcher.style.display = "flex";
-      stopPolling();
+      // Poll не останавливаем: ответ оператора из Telegram должен попасть в виджет,
+      // даже если окно свёрнуто. При следующем открытии сообщения уже на месте.
     });
+  }
+
+  if (getSessionId()) {
+    startPolling();
   }
 
   sendBtn.addEventListener("click", sendMessage);

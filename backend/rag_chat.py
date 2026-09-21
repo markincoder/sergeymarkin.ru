@@ -2,6 +2,7 @@
 """RAG чат: APIRouter для FastAPI."""
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 import re
@@ -9,6 +10,7 @@ import unicodedata
 from typing import Any
 
 import numpy as np
+import requests
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request, Response
 from openai import APIError, OpenAI, PermissionDeniedError
@@ -30,8 +32,7 @@ from .operator_bridge import (
     parse_operator_close_command,
     register_reply_branch_for_session,
     release_operator_line_to_rag,
-    resolve_session_from_plain_text,
-    resolve_session_from_reply_chain,
+    resolve_operator_session_from_telegram_message,
     session_has_prior_assistant_message,
     wants_explicit_human_handoff,
 )
@@ -69,6 +70,29 @@ def _telegram_webhook_secret_live() -> str:
     """Секрет из актуального .env (перечитать при запросе — иначе несохранённый редактор и старый процесс дают 503)."""
     load_dotenv(BASE_DIR / ".env", encoding="utf-8-sig", override=True)
     return (os.environ.get("TELEGRAM_WEBHOOK_SECRET") or "").strip()
+
+
+def _secret_matches(got: str, expected: str) -> bool:
+    if not got or not expected:
+        return False
+    a, b = got.encode("utf-8"), expected.encode("utf-8")
+    if len(a) != len(b):
+        return False
+    return hmac.compare_digest(a, b)
+
+
+def _telegram_webhook_authorized(request: Request) -> bool:
+    """Секрет из заголовка Telegram или ?secret= — заголовок часто срезает прокси."""
+    secret = _telegram_webhook_secret_live()
+    if not secret:
+        return False
+    hdr = (
+        request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+        or request.headers.get("x-telegram-bot-api-secret-token")
+        or ""
+    )
+    query = (request.query_params.get("secret") or "").strip()
+    return _secret_matches(hdr, secret) or _secret_matches(query, secret)
 
 
 _index: Any = None
@@ -588,17 +612,60 @@ def operator_poll(
         db.close()
 
 
+def _notify_operator_unrouted_reply(reply_to_message_id: Any) -> None:
+    """Сказать оператору в Telegram, что ответ не попал в виджет — иначе Reply выглядит как «ушло»."""
+    try:
+        mid = int(reply_to_message_id) if reply_to_message_id is not None else None
+    except (TypeError, ValueError):
+        mid = None
+    text = (
+        "Ответ не попал в чат на сайте: не удалось привязать его к сессии посетителя.\n\n"
+        "Нажмите «Ответить» именно на сообщение бота с историей диалога "
+        "(строка session: …) — либо вставьте эту строку в начало ответа."
+    )
+    try:
+        send_telegram_bot_message(get_notify_config(), text=text, reply_to_message_id=mid)
+    except Exception:
+        logger.exception("Telegram webhook: не удалось отправить подсказку оператору о непривязанном Reply")
+
+
+def _notify_operator_reply_delivered(reply_to_message_id: Any) -> None:
+    try:
+        mid = int(reply_to_message_id) if reply_to_message_id is not None else None
+    except (TypeError, ValueError):
+        mid = None
+    try:
+        send_telegram_bot_message(
+            get_notify_config(),
+            text="✓ Сообщение ушло посетителю в чат на сайте.",
+            reply_to_message_id=mid,
+        )
+    except Exception:
+        logger.exception("Telegram webhook: не удалось подтвердить доставку ответа оператора")
+
+
 @router.get("/telegram/webhook")
-def telegram_webhook_probe() -> dict[str, str]:
+def telegram_webhook_probe() -> dict[str, Any]:
     """Проверка из браузера / curl GET: маршрут доступен. Telegram шлёт только POST."""
     secret_ok = bool(_telegram_webhook_secret_live())
-    return {
+    out: dict[str, Any] = {
         "status": "ok",
         "path": "/api/telegram/webhook",
-        "env_file": str(BASE_DIR / ".env"),
         "secret_configured": "yes" if secret_ok else "no",
-        "hint": "Если secret_configured=no — сохраните .env на диск и перезапустите uvicorn. POST с заголовком X-Telegram-Bot-Api-Secret-Token.",
+        "hint": "POST с заголовком X-Telegram-Bot-Api-Secret-Token или ?secret= тот же, что TELEGRAM_WEBHOOK_SECRET. Telegram шлёт только POST.",
     }
+    token = (Config.TELEGRAM_BOT_TOKEN or "").strip()
+    if token:
+        try:
+            r = requests.get(f"https://api.telegram.org/bot{token}/getWebhookInfo", timeout=12)
+            data = (r.json() or {}).get("result") or {}
+            out["telegram_webhook_url"] = data.get("url") or ""
+            out["pending_update_count"] = data.get("pending_update_count")
+            out["last_error_message"] = data.get("last_error_message") or ""
+            out["last_error_date"] = data.get("last_error_date")
+        except Exception as e:
+            out["telegram_webhook_info_error"] = str(e)
+    return out
 
 
 @router.post("/telegram/webhook")
@@ -610,8 +677,11 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
             BASE_DIR / ".env",
         )
         raise HTTPException(status_code=503, detail="Webhook не настроен (TELEGRAM_WEBHOOK_SECRET)")
-    token_hdr = request.headers.get("X-Telegram-Bot-Api-Secret-Token") or ""
-    if token_hdr != secret:
+    if not _telegram_webhook_authorized(request):
+        logger.warning(
+            "Telegram webhook: секрет не совпал (заголовок X-Telegram-Bot-Api-Secret-Token или ?secret=). "
+            "Прокси мог срезать заголовок — тогда укажите secret в URL setWebhook."
+        )
         raise HTTPException(status_code=403, detail="Неверный секрет")
 
     try:
@@ -619,7 +689,12 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    msg = update.get("message") or update.get("edited_message")
+    msg = (
+        update.get("message")
+        or update.get("edited_message")
+        or update.get("business_message")
+        or update.get("edited_business_message")
+    )
     if not isinstance(msg, dict):
         return {"ok": "true"}
 
@@ -631,31 +706,36 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
         return {"ok": "true"}
 
     chat = msg.get("chat") or {}
-    if not telegram_chat_matches_config(chat.get("id"), Config.TELEGRAM_CHAT_ID):
+    chat_ok = telegram_chat_matches_config(chat.get("id"), Config.TELEGRAM_CHAT_ID)
+    if not chat_ok:
         logger.warning(
             "Telegram webhook: chat_id=%s не совпадает с TELEGRAM_CHAT_ID из .env (как строка: %r). "
-            "Проверьте id чата/группы.",
+            "Проверьте id чата/группы. Попробуем привязать по Reply/session в тексте.",
             chat.get("id"),
             (Config.TELEGRAM_CHAT_ID or "").strip(),
         )
-        return {"ok": "true"}
 
-    reply_to = msg.get("reply_to_message")
     db = SessionLocal()
     try:
-        session_id: str | None = None
-        if isinstance(reply_to, dict):
-            session_id = resolve_session_from_reply_chain(db, reply_to)
+        session_id = resolve_operator_session_from_telegram_message(
+            db,
+            msg,
+            configured_thread_id=Config.TELEGRAM_MESSAGE_THREAD_ID,
+            allow_chat_fallback=chat_ok,
+        )
         if not session_id:
-            session_id = resolve_session_from_plain_text(db, text)
-        if not session_id:
-            rmid = reply_to.get("message_id") if isinstance(reply_to, dict) else None
+            rmid = None
+            reply_to = msg.get("reply_to_message")
+            if isinstance(reply_to, dict):
+                rmid = reply_to.get("message_id")
             logger.info(
-                "Telegram webhook: сессия не определена (reply_to message_id=%s, в тексте нет session/UUID "
-                "активной сессии operator). «Ответить» на любое сообщение в той же ветке (бот, история, посетитель, "
-                "ответ оператора) или строка session: <uuid>.",
+                "Telegram webhook: сессия не определена (reply_to message_id=%s, chat_ok=%s). "
+                "Нужен «Ответить» на сообщение бота с историей или строка session: <uuid>.",
                 rmid,
+                chat_ok,
             )
+            if chat_ok and isinstance(msg.get("reply_to_message"), dict):
+                _notify_operator_unrouted_reply(msg.get("message_id"))
             return {"ok": "true"}
         bridge_row = db.get(ChatBridgeSession, session_id)
         if bridge_row is None:
@@ -665,12 +745,14 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
             )
             return {"ok": "true"}
         if bridge_row.mode != "operator":
-            logger.warning(
-                "Telegram webhook: сессия %s не в режиме operator (mode=%s), ответ не сохранён",
+            logger.info(
+                "Telegram webhook: сессия %s была в режиме %s — возвращаем operator по ответу из Telegram",
                 session_id,
                 bridge_row.mode,
             )
-            return {"ok": "true"}
+            bridge_row.mode = "operator"
+            db.add(bridge_row)
+            db.commit()
         close_extra = parse_operator_close_command(text)
         if close_extra is not None:
             notice = close_extra if close_extra else Config.OPERATOR_CHAT_CLOSURE_MESSAGE
@@ -708,6 +790,8 @@ async def telegram_webhook(request: Request) -> dict[str, str]:
                 saved[0],
                 saved[1],
             )
+            if chat_ok:
+                _notify_operator_reply_delivered(msg.get("message_id"))
     finally:
         db.close()
 

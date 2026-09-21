@@ -27,7 +27,7 @@
         </h1>
         <p class="lead col-lg-9 mx-auto mb-4">
           Разрабатываю умных RAG-ассистентов по корпоративным базам знаний, сквозные сценарии n8n и автономные AI-продукты. 
-          Сокращаю ручной труд отделов продаж, HR и клиентской поддержки на <strong>40–70%</strong>.
+          Сокращаю ручной труд отделов продаж, HR и клиентской поддержки на <strong>40–70%</strong> — в кейсах это не слоган, а цифры конкретного внедрения.
         </p>
 
         <!-- CTA Buttons -->
@@ -281,6 +281,10 @@
       <h2 class="h3 fw-bold text-gradient mb-2">Примеры реализованных решений</h2>
       <p class="text-muted col-lg-8 mx-auto">
         Реальные работающие системы: коммерческий SaaS, мобильные приложения в сторах, RAG-боты и B2B-автоматизации.
+        Цифры из проектов: <strong class="text-light">−85%</strong> времени HR на скрининг,
+        <strong class="text-light">×7–10</strong> откликов на ту же команду,
+        <strong class="text-light">70%+</strong> FAQ без оператора,
+        <strong class="text-light">100%</strong> звонков на аудите вместо 3–5%.
       </p>
     </div>
 
@@ -309,6 +313,9 @@
             <span class="case-category-pill">{{ c.category_name | default('AI Решение') }}</span>
             <h3 class="h5 card-title text-white mb-2">{{ c.title }}</h3>
             <p class="card-text text-muted small flex-grow-1 mb-3">{{ c.short }}</p>
+            {% if c.result %}
+            <p class="small mb-3"><span class="text-accent-cyan fw-bold">Эффект:</span> <span class="text-muted">{{ c.result }}</span></p>
+            {% endif %}
             
             <div class="tech-chips-wrap mb-3">
               {% for tag in c.tags | default([]) %}

@@ -2,7 +2,7 @@
 """SQLAlchemy engine и сессии для FastAPI."""
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, exc as sa_exc, text
+from sqlalchemy import create_engine, event, exc as sa_exc, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from config import Config
@@ -15,6 +15,14 @@ if _sqlite:
 
 engine = create_engine(Config.SQLALCHEMY_DATABASE_URI, echo=False, **_kw)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+if _sqlite:
+    @event.listens_for(engine, "connect")
+    def _sqlite_pragmas(dbapi_conn, _connection_record) -> None:
+        cur = dbapi_conn.cursor()
+        cur.execute("PRAGMA journal_mode=WAL")
+        cur.execute("PRAGMA synchronous=NORMAL")
+        cur.close()
 
 
 def _ensure_closure_pending_column() -> None:
